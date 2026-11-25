@@ -813,7 +813,7 @@
         dir: turnDir,
         mode: 'view',
         paperStyle: 'grid',
-        duration: 620,
+        duration: 560,
         onComplete: () => {
           if (state.activeView !== prevView) prevEl.classList.remove('active');
         }
@@ -1743,6 +1743,10 @@
   function toggleVocabFlashcard() {
     const fcCard = document.getElementById('vocab-fc-card');
     if (!fcCard) return;
+    if (window.TechoPageTurn && typeof window.TechoPageTurn.cancelStageTurn === 'function') {
+      window.TechoPageTurn.cancelStageTurn(fcCard);
+    }
+    fcCard.classList.toggle('flipped', Boolean(state.flashFlipped));
     const frontEl = fcCard.querySelector('.fc-front');
     const backEl = fcCard.querySelector('.fc-back');
     const nextFlipped = !state.flashFlipped;
@@ -1754,7 +1758,7 @@
         dir: nextFlipped ? 'next' : 'prev',
         mode: 'card',
         paperStyle: 'ruled',
-        duration: 540,
+        duration: 480,
         onComplete: () => {
           fcCard.classList.toggle('flipped', state.flashFlipped);
         }
@@ -1818,12 +1822,12 @@
       document.getElementById('btn-recite-prev')?.addEventListener('click', () => {
         state.reciteIdx = (state.reciteIdx - 1 + words.length) % words.length;
         if (state.recitePlaying && reciteCtrl) reciteCtrl.jumpTo(state.reciteIdx);
-        else runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'prev', 'grid', 500);
+        else runSnapshotTurn(() => document.querySelector('#vocab-mode-stage .recite-card') || document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'prev', 'grid', 460);
       });
       document.getElementById('btn-recite-next')?.addEventListener('click', () => {
         state.reciteIdx = (state.reciteIdx + 1) % words.length;
         if (state.recitePlaying && reciteCtrl) reciteCtrl.jumpTo(state.reciteIdx);
-        else runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'next', 'grid', 500);
+        else runSnapshotTurn(() => document.querySelector('#vocab-mode-stage .recite-card') || document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'next', 'grid', 460);
       });
       document.getElementById('btn-recite-toggle')?.addEventListener('click', () => {
         if (state.recitePlaying) {
@@ -1907,6 +1911,7 @@
         if (window.TechoPageTurn && typeof window.TechoPageTurn.attachCornerPeek === 'function') {
           window.TechoPageTurn.attachCornerPeek(fcCard, {
             paperStyle: 'ruled',
+            isFlipped: () => Boolean(state.flashFlipped),
             getTopFace: () => fcCard.querySelector(state.flashFlipped ? '.fc-back' : '.fc-front'),
             getBottomFace: () => fcCard.querySelector(state.flashFlipped ? '.fc-front' : '.fc-back')
           });
@@ -1938,7 +1943,7 @@
             FireworksFX.launch(2, getEventOrigin(e, btn));
             reactXiaoKe('09_proud_streak', '本轮横线索引词卡已全部过完！核心词留存率又上一个台阶！', 4800);
           }
-          runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'next', 'ruled', 500);
+          runSnapshotTurn(() => document.querySelector('#vocab-mode-stage .fc-stack-shell') || document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'next', 'ruled', 460);
         };
       });
     }
@@ -2163,8 +2168,8 @@
             },
             nextMode === 'real_paper' ? 'next' : 'prev',
             nextMode === 'real_paper' ? 'kraft' : 'grid',
-            560,
-            () => document.querySelector('#practice-host .q-card') || document.getElementById('real-paper-studio-host') || document.getElementById('practice-host')
+            520,
+            () => document.querySelector('#practice-host .practice-split-layout') || document.getElementById('real-paper-studio-host') || document.getElementById('practice-host')
           );
         };
       });
@@ -2935,15 +2940,15 @@
         if (nextMode === state.practiceMode) return;
         stopAllAudioAndTimers();
         runSnapshotTurn(
-          () => host.querySelector('.q-card') || host,
+          () => host.querySelector('.practice-split-layout') || host.querySelector('.q-card') || host,
           () => {
             state.practiceMode = nextMode;
             renderPracticeView();
           },
           nextMode === 'real_paper' ? 'next' : 'prev',
           nextMode === 'real_paper' ? 'kraft' : 'grid',
-          560,
-          () => document.getElementById('real-paper-studio-host') || host.querySelector('.q-card') || host
+          520,
+          () => document.getElementById('real-paper-studio-host') || host.querySelector('.practice-split-layout') || host.querySelector('.q-card') || host
         );
       };
     });
@@ -3193,12 +3198,17 @@
       if (window.TechoPageTurn && typeof window.TechoPageTurn.attachCornerPeek === 'function') {
         window.TechoPageTurn.attachCornerPeek(flipCard, {
           paperStyle: 'grid',
+          isFlipped: () => Boolean(state.cardFlipped),
           getTopFace: () => flipCard.querySelector(state.cardFlipped ? '.flip-back' : '.flip-front'),
           getBottomFace: () => flipCard.querySelector(state.cardFlipped ? '.flip-front' : '.flip-back')
         });
       }
       const toggleFlip = (e) => {
         if (e && e.target.closest('#btn-flip-jump-sec')) return;
+        if (window.TechoPageTurn && typeof window.TechoPageTurn.cancelStageTurn === 'function') {
+          window.TechoPageTurn.cancelStageTurn(flipCard);
+        }
+        flipCard.classList.toggle('flipped', Boolean(state.cardFlipped));
         const frontEl = flipCard.querySelector('.flip-front');
         const backEl = flipCard.querySelector('.flip-back');
         const nextFlipped = !state.cardFlipped;
@@ -3213,7 +3223,7 @@
               dir: nextFlipped ? 'next' : 'prev',
               mode: 'card',
               paperStyle: 'grid',
-              duration: 520,
+              duration: 480,
               onComplete: () => {
                 flipCard.classList.toggle('flipped', state.cardFlipped);
               }

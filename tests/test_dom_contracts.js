@@ -340,6 +340,12 @@ function verifyDomContract(label, htmlPath, appJsPath, engineJsPaths, expectedVi
     check(geom && Array.isArray(geom.flapPoly) && geom.flapPoly.length >= 3, `${label}: TechoPageTurn.computeFoldGeometry invalid flapPoly`);
     check(geom && Array.isArray(geom.foldEdge) && geom.foldEdge.length === 2, `${label}: TechoPageTurn.computeFoldGeometry invalid foldEdge`);
     check(geom && geom.lift > 20, `${label}: TechoPageTurn.computeFoldGeometry expected lift > 20, got ${geom && geom.lift}`);
+    if (typeof bw.TechoPageTurn.paperTurnEase === 'function') {
+      const e0 = bw.TechoPageTurn.paperTurnEase(0);
+      const e5 = bw.TechoPageTurn.paperTurnEase(0.5);
+      const e1 = bw.TechoPageTurn.paperTurnEase(1);
+      check(e0 === 0 && e1 === 1 && e5 >= 0.45 && e5 <= 0.55, `${label}: TechoPageTurn.paperTurnEase invalid curve (${e0}, ${e5}, ${e1})`);
+    }
   }
 
   // Verify REAL_CET4_PAPERS (6 authentic papers / 342 items) & RealPaperStudio LIVE in VM execution

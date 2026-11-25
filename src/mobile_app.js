@@ -1279,29 +1279,46 @@
         subBodyHTML = `
           <div class="m-deck-stack">
             <div class="m-flashcard ${state.vocabCardFlipped ? 'flipped' : ''}" id="m-fc-card">
-              <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:12px">
-                  <span class="exam-tag orange">剩余 ${state.vocabQueue.length} 词</span>
-                  ${cur.examFreq ? `<span class="exam-tag gold">考频 ${cur.examFreq}</span>` : ''}
-                  <button type="button" class="m-pill-btn marigold" id="m-fc-speak">${ic('volume')}<span>发音</span></button>
+              <div class="m-fc-face m-fc-front">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:12px">
+                    <span class="exam-tag orange">剩余 ${state.vocabQueue.length} 词</span>
+                    ${cur.examFreq ? `<span class="exam-tag gold">考频 ${cur.examFreq}</span>` : ''}
+                    <button type="button" class="m-pill-btn marigold" id="m-fc-speak">${ic('volume')}<span>发音</span></button>
+                  </div>
+                  <div style="text-align:center;padding:24px 0 18px">
+                    <div class="m-word-big">${escapeHTML(cur.word)}</div>
+                    <div class="m-word-phonetic">${escapeHTML(cur.phonetic || '')} ${escapeHTML(cur.pos || '')}</div>
+                  </div>
+                  <div class="m-flip-hint">
+                    先在脑中回想中文释义与搭配，轻点卡片向右翻页核对
+                  </div>
                 </div>
-                <div style="text-align:center;padding:${state.vocabCardFlipped ? '4px 0 8px' : '24px 0 18px'}">
-                  <div class="m-word-big">${escapeHTML(cur.word)}</div>
-                  <div class="m-word-phonetic">${escapeHTML(cur.phonetic || '')} ${escapeHTML(cur.pos || '')}</div>
+                <div style="font-family:var(--font-code);font-size:10.5px;font-weight:700;text-align:center;color:var(--text-muted);margin-top:10px">
+                  轻点卡片任意处向右翻页核对
                 </div>
-                ${state.vocabCardFlipped ? `
+              </div>
+
+              <div class="m-fc-face m-fc-back">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:10px">
+                    <span class="exam-tag orange">剩余 ${state.vocabQueue.length} 词</span>
+                    ${cur.examFreq ? `<span class="exam-tag gold">考频 ${cur.examFreq}</span>` : ''}
+                    <button type="button" class="m-pill-btn marigold" data-m-fc-speak="1">${ic('volume')}<span>发音</span></button>
+                  </div>
+                  <div style="text-align:center;padding:4px 0 8px">
+                    <div class="m-word-big">${escapeHTML(cur.word)}</div>
+                    <div class="m-word-phonetic">${escapeHTML(cur.phonetic || '')} ${escapeHTML(cur.pos || '')}</div>
+                  </div>
                   <div class="m-word-meaning" style="text-align:center">${escapeHTML(cur.meaning || '')}</div>
                   ${(cur.roots || cur.mnemonic) ? `<div class="m-word-box"><strong>词根巧记：</strong>${escapeHTML([cur.roots, cur.mnemonic].filter(Boolean).join(' · '))}</div>` : ''}
                   ${collocs.length ? `<div class="m-word-box"><strong>常考搭配：</strong><div class="m-colloc-list">${collocs.map(c => typeof c === 'string' ? `<span class="m-colloc-chip">${escapeHTML(c)}</span>` : `<span class="m-colloc-chip"><b>${escapeHTML(c.en)}</b> ${escapeHTML(c.zh || '')}</span>`).join('')}</div></div>` : ''}
                   ${sentEn ? `<div class="m-word-box"><div class="en-serif" style="color:var(--text)">${formatSentenceHighlight(sentEn, cur.word)}</div>${sentZh ? `<div style="font-size:11.8px;color:var(--text-muted);margin-top:3px">${escapeHTML(sentZh)}</div>` : ''}</div>` : ''}
                   ${cur.confusable ? `<div class="trap-callout"><strong>易混辨析：</strong>${escapeHTML(cur.confusable.word || cur.confusable.pair || '')} — ${escapeHTML(cur.confusable.diff || '')}</div>` : ''}
-                ` : `
-                  <div class="m-flip-hint">
-                    先在脑中回想中文释义与搭配，轻点卡片向右翻页核对
-                  </div>`}
-              </div>
-              <div style="font-family:var(--font-code);font-size:10.5px;font-weight:700;text-align:center;color:var(--text-muted);margin-top:10px">
-                ${state.vocabCardFlipped ? '选择下方按键 · 触发艾宾浩斯队列调度' : '轻点卡片任意处向右翻页核对'}
+                </div>
+                <div style="font-family:var(--font-code);font-size:10.5px;font-weight:700;text-align:center;color:var(--text-muted);margin-top:10px">
+                  选择下方按键 · 触发艾宾浩斯队列调度
+                </div>
               </div>
             </div>
           </div>
@@ -1505,7 +1522,7 @@
       });
       document.getElementById('m-v-prev')?.addEventListener('click', () => {
         stopAllAudioAndTimers();
-        runMobileSnapTurn(getVocabStageTarget, () => {
+        runMobileSnapTurn(() => host.querySelector('.m-recite-card') || getVocabStageTarget(), () => {
           state.vocabReciteIdx = (state.vocabReciteIdx - 1 + dayWords.length) % dayWords.length;
           state.vocabCurrentBeat = 'word';
           renderVocabView();
@@ -1513,7 +1530,7 @@
       });
       document.getElementById('m-v-next')?.addEventListener('click', () => {
         stopAllAudioAndTimers();
-        runMobileSnapTurn(getVocabStageTarget, () => {
+        runMobileSnapTurn(() => host.querySelector('.m-recite-card') || getVocabStageTarget(), () => {
           state.vocabReciteIdx = (state.vocabReciteIdx + 1) % dayWords.length;
           state.vocabCurrentBeat = 'word';
           renderVocabView();
@@ -1585,35 +1602,59 @@
       });
     } else if (state.vocabSubMode === 'flashcard') {
       const cur = state.vocabQueue[0];
-      document.getElementById('m-fc-card')?.addEventListener('click', (e) => {
-        if (e.target.closest('#m-fc-speak')) return;
-        const nextFlipped = !state.vocabCardFlipped;
-        runMobileSnapTurn(
-          () => document.getElementById('m-fc-card'),
-          () => {
-            state.vocabCardFlipped = nextFlipped;
-            renderVocabView();
-          },
-          nextFlipped ? 'next' : 'prev',
-          'ruled',
-          480
-        );
-      });
+      const mFcCard = document.getElementById('m-fc-card');
+      if (mFcCard) {
+        mFcCard.addEventListener('click', (e) => {
+          if (e.target.closest('#m-fc-speak, [data-m-fc-speak]')) return;
+          if (window.TechoPageTurn && typeof window.TechoPageTurn.cancelStageTurn === 'function') {
+            window.TechoPageTurn.cancelStageTurn(mFcCard);
+          }
+          mFcCard.classList.toggle('flipped', Boolean(state.vocabCardFlipped));
+          const frontEl = mFcCard.querySelector('.m-fc-front');
+          const backEl = mFcCard.querySelector('.m-fc-back');
+          const nextFlipped = !state.vocabCardFlipped;
+          state.vocabCardFlipped = nextFlipped;
+          if (window.TechoPageTurn && typeof window.TechoPageTurn.turnLayers === 'function' && frontEl && backEl) {
+            window.TechoPageTurn.turnLayers(
+              mFcCard,
+              nextFlipped ? frontEl : backEl,
+              nextFlipped ? backEl : frontEl,
+              {
+                dir: nextFlipped ? 'next' : 'prev',
+                mode: 'card',
+                paperStyle: 'ruled',
+                duration: 460,
+                onComplete: () => {
+                  mFcCard.classList.toggle('flipped', state.vocabCardFlipped);
+                }
+              }
+            );
+          } else {
+            mFcCard.classList.toggle('flipped', nextFlipped);
+          }
+        });
+      }
       document.getElementById('m-fc-speak')?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (cur && window.Cet4Speech) window.Cet4Speech.speakWord(cur.word, { rate: state.vocabRate });
       });
+      host.querySelectorAll('[data-m-fc-speak]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          if (cur && window.Cet4Speech) window.Cet4Speech.speakWord(cur.word, { rate: state.vocabRate });
+        };
+      });
       host.querySelectorAll('[data-fc-rate]').forEach(btn => {
         btn.onclick = (e) => {
           runMobileSnapTurn(
-            () => document.getElementById('m-fc-card'),
+            () => document.querySelector('#m-view-vocab .m-deck-stack') || document.getElementById('m-fc-card'),
             () => {
               rateVocabWord(cur, btn.dataset.fcRate, e);
               renderVocabView();
             },
             'next',
             'ruled',
-            460
+            440
           );
         };
       });
@@ -3123,7 +3164,7 @@
         dir: turnDir,
         mode: 'view',
         paperStyle: 'grid',
-        duration: 520,
+        duration: 480,
         onComplete: () => {
           if (state.activeView !== prevView) prevEl.classList.remove('active');
         }
