@@ -19,6 +19,7 @@ JS_FILES = [
     "cet4_animations.js",
     "cet4_speech.js",
     "cet4_grader.js",
+    "techo_pageturn.js",
     "real_papers_data.js",
     "real_paper_studio.js",
     "xiaoke_assistant.js",

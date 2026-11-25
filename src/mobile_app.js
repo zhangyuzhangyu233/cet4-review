@@ -192,6 +192,24 @@
     };
   }
 
+  const M_VIEW_ORDER = ['knowledge', 'vocab', 'practice', 'mastery', 'notebook'];
+  const M_VMODE_ORDER = ['recite', 'flashcard', 'blind', 'confusable'];
+  const M_NB_ORDER = ['wrong', 'vocab', 'fav'];
+
+  function runMobileSnapTurn(getTarget, updateFn, dir = 'next', paperStyle = 'grid', duration = 480, getTargetAfter = null) {
+    const el = typeof getTarget === 'function' ? getTarget() : getTarget;
+    if (el && window.TechoPageTurn && typeof window.TechoPageTurn.turnSnapshot === 'function') {
+      window.TechoPageTurn.turnSnapshot(el, updateFn, {
+        dir,
+        paperStyle,
+        duration,
+        getTargetAfter: getTargetAfter || (typeof getTarget === 'function' ? getTarget : null)
+      });
+    } else {
+      updateFn();
+    }
+  }
+
   const state = loadState();
   let activeReciteCtrl = null;
   let activeListenCtrl = null;
@@ -643,10 +661,17 @@
     openBottomSheet(`6 章 · ${ORDERED_SECTIONS.length} 节破题精讲目录`, html, (bodyEl) => {
       bodyEl.querySelectorAll('[data-toc-sec]').forEach(btn => {
         btn.onclick = () => {
+          const prevIdx = ORDERED_SECTIONS.findIndex(s => s.id === state.activeSection);
+          const nextIdx = ORDERED_SECTIONS.findIndex(s => s.id === btn.dataset.tocSec);
+          const dir = (btn.dataset.tocSec !== state.activeSection && prevIdx >= 0 && nextIdx >= 0)
+            ? (nextIdx < prevIdx ? 'prev' : 'next')
+            : null;
           state.activeSection = btn.dataset.tocSec;
           closeBottomSheet();
-          renderKnowledgeView();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.scrollTo({ top: 0, behavior: 'auto' });
+          const getTarget = () => document.querySelector('#m-view-knowledge .m-sec-bar')?.nextElementSibling || document.getElementById('m-view-knowledge');
+          if (dir) runMobileSnapTurn(getTarget, () => renderKnowledgeView(), dir, 'grid', 480);
+          else renderKnowledgeView();
         };
       });
     });
@@ -1020,11 +1045,22 @@
       if (state.studiedSections[sec.id]) FireworksFX.launch(1.1, { x: e.clientX, y: e.clientY });
       renderKnowledgeView();
     });
+    const getKnowledgeSecTarget = () => host.querySelector('.m-sec-bar')?.nextElementSibling || host.querySelector('.m-sec-bar');
     document.getElementById('m-sec-prev')?.addEventListener('click', () => {
-      if (prevSec) { state.activeSection = prevSec.id; renderKnowledgeView(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (!prevSec) return;
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      runMobileSnapTurn(getKnowledgeSecTarget, () => {
+        state.activeSection = prevSec.id;
+        renderKnowledgeView();
+      }, 'prev', 'grid', 480);
     });
     document.getElementById('m-sec-next')?.addEventListener('click', () => {
-      if (nextSec) { state.activeSection = nextSec.id; renderKnowledgeView(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (!nextSec) return;
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      runMobileSnapTurn(getKnowledgeSecTarget, () => {
+        state.activeSection = nextSec.id;
+        renderKnowledgeView();
+      }, 'next', 'grid', 480);
     });
     document.getElementById('m-sec-prac')?.addEventListener('click', () => {
       startPracticeScope(normSkill(sec?.skillId || 'all'));
@@ -1261,11 +1297,11 @@
                   ${cur.confusable ? `<div class="trap-callout"><strong>易混辨析：</strong>${escapeHTML(cur.confusable.word || cur.confusable.pair || '')} — ${escapeHTML(cur.confusable.diff || '')}</div>` : ''}
                 ` : `
                   <div class="m-flip-hint">
-                    先在脑中回想中文释义与搭配，轻点卡片翻转核对
+                    先在脑中回想中文释义与搭配，轻点卡片向右翻页核对
                   </div>`}
               </div>
               <div style="font-family:var(--font-code);font-size:10.5px;font-weight:700;text-align:center;color:var(--text-muted);margin-top:10px">
-                ${state.vocabCardFlipped ? '选择下方按键 · 触发艾宾浩斯队列调度' : '轻点卡片任意处翻面核对'}
+                ${state.vocabCardFlipped ? '选择下方按键 · 触发艾宾浩斯队列调度' : '轻点卡片任意处向右翻页核对'}
               </div>
             </div>
           </div>
@@ -1418,28 +1454,43 @@
       ${subBodyHTML}
     `;
 
+    const getVocabStageTarget = () => host.querySelector('#m-fc-card') || host.querySelector('.m-recite-card') || host.querySelector('.m-blind-stage') || host.querySelector('.m-seg + .salon-card');
+    const curVocabPaper = state.vocabSubMode === 'flashcard' ? 'ruled' : 'grid';
+
     /* Bind Day Scroller & Sub-Mode Tabs */
     host.querySelectorAll('[data-vday]').forEach(btn => {
       btn.onclick = () => {
         stopAllAudioAndTimers();
-        state.vocabDay = Number(btn.dataset.vday);
-        state.vocabReciteIdx = 0;
-        state.vocabQueueDay = null;
-        state.vocabBlindItem = null;
-        saveState();
-        updateGlobalBadges();
-        renderVocabView();
+        const nextDay = Number(btn.dataset.vday);
+        if (nextDay === state.vocabDay) return;
+        const dir = nextDay < state.vocabDay ? 'prev' : 'next';
+        runMobileSnapTurn(getVocabStageTarget, () => {
+          state.vocabDay = nextDay;
+          state.vocabReciteIdx = 0;
+          state.vocabQueueDay = null;
+          state.vocabBlindItem = null;
+          saveState();
+          updateGlobalBadges();
+          renderVocabView();
+        }, dir, curVocabPaper, 480);
       };
     });
 
     host.querySelectorAll('[data-vmode]').forEach(btn => {
       btn.onclick = () => {
         stopAllAudioAndTimers();
-        state.vocabSubMode = btn.dataset.vmode;
-        if (state.vocabSubMode === 'blind') {
-          state.vocabBlindItem = buildBlindQuizItem(dayWords);
-        }
-        renderVocabView();
+        const nextMode = btn.dataset.vmode;
+        if (nextMode === state.vocabSubMode) return;
+        const pIdx = M_VMODE_ORDER.indexOf(state.vocabSubMode);
+        const nIdx = M_VMODE_ORDER.indexOf(nextMode);
+        const dir = (nIdx >= 0 && pIdx >= 0 && nIdx < pIdx) ? 'prev' : 'next';
+        runMobileSnapTurn(getVocabStageTarget, () => {
+          state.vocabSubMode = nextMode;
+          if (state.vocabSubMode === 'blind') {
+            state.vocabBlindItem = buildBlindQuizItem(dayWords);
+          }
+          renderVocabView();
+        }, dir, nextMode === 'flashcard' ? 'ruled' : 'grid', 480);
         if (state.vocabSubMode === 'blind' && state.vocabBlindItem && window.Cet4Speech) {
           window.Cet4Speech.speakWord(state.vocabBlindItem.word.word, { rate: state.vocabRate });
         }
@@ -1454,15 +1505,19 @@
       });
       document.getElementById('m-v-prev')?.addEventListener('click', () => {
         stopAllAudioAndTimers();
-        state.vocabReciteIdx = (state.vocabReciteIdx - 1 + dayWords.length) % dayWords.length;
-        state.vocabCurrentBeat = 'word';
-        renderVocabView();
+        runMobileSnapTurn(getVocabStageTarget, () => {
+          state.vocabReciteIdx = (state.vocabReciteIdx - 1 + dayWords.length) % dayWords.length;
+          state.vocabCurrentBeat = 'word';
+          renderVocabView();
+        }, 'prev', 'grid', 460);
       });
       document.getElementById('m-v-next')?.addEventListener('click', () => {
         stopAllAudioAndTimers();
-        state.vocabReciteIdx = (state.vocabReciteIdx + 1) % dayWords.length;
-        state.vocabCurrentBeat = 'word';
-        renderVocabView();
+        runMobileSnapTurn(getVocabStageTarget, () => {
+          state.vocabReciteIdx = (state.vocabReciteIdx + 1) % dayWords.length;
+          state.vocabCurrentBeat = 'word';
+          renderVocabView();
+        }, 'next', 'grid', 460);
       });
       document.getElementById('m-v-recite-toggle')?.addEventListener('click', () => {
         if (state.vocabRecitePlaying) {
@@ -1532,8 +1587,17 @@
       const cur = state.vocabQueue[0];
       document.getElementById('m-fc-card')?.addEventListener('click', (e) => {
         if (e.target.closest('#m-fc-speak')) return;
-        state.vocabCardFlipped = !state.vocabCardFlipped;
-        renderVocabView();
+        const nextFlipped = !state.vocabCardFlipped;
+        runMobileSnapTurn(
+          () => document.getElementById('m-fc-card'),
+          () => {
+            state.vocabCardFlipped = nextFlipped;
+            renderVocabView();
+          },
+          nextFlipped ? 'next' : 'prev',
+          'ruled',
+          480
+        );
       });
       document.getElementById('m-fc-speak')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1541,8 +1605,16 @@
       });
       host.querySelectorAll('[data-fc-rate]').forEach(btn => {
         btn.onclick = (e) => {
-          rateVocabWord(cur, btn.dataset.fcRate, e);
-          renderVocabView();
+          runMobileSnapTurn(
+            () => document.getElementById('m-fc-card'),
+            () => {
+              rateVocabWord(cur, btn.dataset.fcRate, e);
+              renderVocabView();
+            },
+            'next',
+            'ruled',
+            460
+          );
         };
       });
       document.getElementById('m-fc-restart')?.addEventListener('click', () => {
@@ -1576,8 +1648,10 @@
         };
       });
       document.getElementById('m-blind-next')?.addEventListener('click', () => {
-        state.vocabBlindItem = buildBlindQuizItem(dayWords);
-        renderVocabView();
+        runMobileSnapTurn(getVocabStageTarget, () => {
+          state.vocabBlindItem = buildBlindQuizItem(dayWords);
+          renderVocabView();
+        }, 'next', 'grid', 460);
         if (state.vocabBlindItem && window.Cet4Speech) {
           window.Cet4Speech.speakWord(state.vocabBlindItem.word.word, { rate: state.vocabRate });
         }
@@ -1599,14 +1673,18 @@
         };
       });
       document.getElementById('m-conf-prev')?.addEventListener('click', () => {
-        state.vocabConfIdx = (state.vocabConfIdx - 1 + CONFUSABLE_PAIRS.length) % Math.max(1, CONFUSABLE_PAIRS.length);
-        state.vocabConfPicked = null;
-        renderVocabView();
+        runMobileSnapTurn(getVocabStageTarget, () => {
+          state.vocabConfIdx = (state.vocabConfIdx - 1 + CONFUSABLE_PAIRS.length) % Math.max(1, CONFUSABLE_PAIRS.length);
+          state.vocabConfPicked = null;
+          renderVocabView();
+        }, 'prev', 'grid', 460);
       });
       document.getElementById('m-conf-next')?.addEventListener('click', () => {
-        state.vocabConfIdx = (state.vocabConfIdx + 1) % Math.max(1, CONFUSABLE_PAIRS.length);
-        state.vocabConfPicked = null;
-        renderVocabView();
+        runMobileSnapTurn(getVocabStageTarget, () => {
+          state.vocabConfIdx = (state.vocabConfIdx + 1) % Math.max(1, CONFUSABLE_PAIRS.length);
+          state.vocabConfPicked = null;
+          renderVocabView();
+        }, 'next', 'grid', 460);
       });
     }
 
@@ -2477,11 +2555,21 @@
       `;
       host.querySelectorAll('[data-pmode]').forEach(btn => {
         btn.onclick = () => {
-          if (state.practiceMode === btn.dataset.pmode) return;
+          const nextMode = btn.dataset.pmode;
+          if (state.practiceMode === nextMode) return;
           stopAllAudioAndTimers();
-          unmountRealPaperStudio();
-          state.practiceMode = btn.dataset.pmode;
-          renderPracticeView();
+          runMobileSnapTurn(
+            () => document.getElementById('m-real-paper-studio-host') || document.getElementById('m-view-practice'),
+            () => {
+              unmountRealPaperStudio();
+              state.practiceMode = nextMode;
+              renderPracticeView();
+            },
+            nextMode === 'real_paper' ? 'next' : 'prev',
+            nextMode === 'real_paper' ? 'kraft' : 'grid',
+            480,
+            () => document.querySelector('#m-prac-stage .q-card') || document.getElementById('m-real-paper-studio-host') || document.getElementById('m-view-practice')
+          );
         };
       });
       const studioHost = document.getElementById('m-real-paper-studio-host');
@@ -2595,37 +2683,54 @@
       </div>
     `;
 
+    const getPracTarget = () => host.querySelector('#m-prac-stage .q-card') || document.getElementById('m-prac-stage');
     const goNext = () => {
       stopAllAudioAndTimers();
-      if (state.practiceIdx < state.practiceHistory.length - 1) state.practiceIdx++;
-      else {
-        drawNextPracticeItem();
-        state.practiceIdx = state.practiceHistory.length - 1;
-      }
-      renderPracticeView();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      runMobileSnapTurn(getPracTarget, () => {
+        if (state.practiceIdx < state.practiceHistory.length - 1) state.practiceIdx++;
+        else {
+          drawNextPracticeItem();
+          state.practiceIdx = state.practiceHistory.length - 1;
+        }
+        renderPracticeView();
+      }, 'next', 'grid', 480);
     };
 
     host.querySelectorAll('[data-pmode]').forEach(btn => {
       btn.onclick = () => {
-        if (state.practiceMode === btn.dataset.pmode) return;
+        const nextMode = btn.dataset.pmode;
+        if (state.practiceMode === nextMode) return;
         stopAllAudioAndTimers();
-        state.practiceMode = btn.dataset.pmode;
-        renderPracticeView();
+        runMobileSnapTurn(
+          getPracTarget,
+          () => {
+            state.practiceMode = nextMode;
+            renderPracticeView();
+          },
+          nextMode === 'real_paper' ? 'next' : 'prev',
+          nextMode === 'real_paper' ? 'kraft' : 'grid',
+          480,
+          () => document.getElementById('m-real-paper-studio-host') || getPracTarget()
+        );
       };
     });
 
     host.querySelectorAll('[data-pskill]').forEach(btn => {
       btn.onclick = () => {
-        startPracticeScope(btn.dataset.pskill);
-        renderPracticeView();
+        runMobileSnapTurn(getPracTarget, () => {
+          startPracticeScope(btn.dataset.pskill);
+          renderPracticeView();
+        }, 'next', 'grid', 480);
       };
     });
 
     document.getElementById('m-prac-sum-btn')?.addEventListener('click', () => openTopicSummarySheet(sk));
     document.getElementById('m-prac-reshuffle')?.addEventListener('click', () => {
-      startPracticeScope(state.practiceSkill);
-      renderPracticeView();
+      runMobileSnapTurn(getPracTarget, () => {
+        startPracticeScope(state.practiceSkill);
+        renderPracticeView();
+      }, 'next', 'grid', 480);
     });
 
     document.getElementById('m-kp-toggle-btn')?.addEventListener('click', () => {
@@ -2647,9 +2752,11 @@
     document.getElementById('m-q-prev')?.addEventListener('click', () => {
       if (state.practiceIdx > 0) {
         stopAllAudioAndTimers();
-        state.practiceIdx--;
-        renderPracticeView();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        runMobileSnapTurn(getPracTarget, () => {
+          state.practiceIdx--;
+          renderPracticeView();
+        }, 'prev', 'grid', 480);
       }
     });
     document.getElementById('m-q-next')?.addEventListener('click', goNext);
@@ -2955,10 +3062,18 @@
     };
 
     paintList();
+
     host.querySelectorAll('[data-nbf]').forEach(btn => {
       btn.onclick = () => {
-        state.nbFilter = btn.dataset.nbf;
-        renderNotebookView();
+        const nextNb = btn.dataset.nbf;
+        if (nextNb === state.nbFilter) return;
+        const pIdx = M_NB_ORDER.indexOf(state.nbFilter);
+        const nIdx = M_NB_ORDER.indexOf(nextNb);
+        const dir = (nIdx >= 0 && pIdx >= 0 && nIdx < pIdx) ? 'prev' : 'next';
+        runMobileSnapTurn(() => host.querySelector('.m-folder-sheet'), () => {
+          state.nbFilter = nextNb;
+          renderNotebookView();
+        }, dir, 'grid', 460);
       };
     });
     document.getElementById('m-nb-search')?.addEventListener('input', (e) => {
@@ -2972,10 +3087,29 @@
   /* ==================== VIEW SWITCHER & BOOTSTRAP ==================== */
   function switchView(viewId) {
     stopAllAudioAndTimers();
+    const shellEl = document.querySelector('.m-shell');
+    if (shellEl && window.TechoPageTurn && typeof window.TechoPageTurn.cancelStageTurn === 'function') {
+      window.TechoPageTurn.cancelStageTurn(shellEl);
+    }
+    const prevView = state.activeView;
+    const prevIdx = M_VIEW_ORDER.indexOf(prevView);
+    const nextIdx = M_VIEW_ORDER.indexOf(viewId);
+    const turnDir = (prevView && prevView !== viewId)
+      ? ((prevIdx >= 0 && nextIdx >= 0 && nextIdx < prevIdx) ? 'prev' : 'next')
+      : null;
+    const prevEl = prevView ? document.getElementById(`m-view-${prevView}`) : null;
+    const nextEl = document.getElementById(`m-view-${viewId}`);
+    const canCurl = Boolean(turnDir && prevEl && nextEl && shellEl && window.TechoPageTurn && typeof window.TechoPageTurn.turnLayers === 'function');
+
     if (state.activeView === 'knowledge' && viewId !== 'knowledge') destroySectionAnim();
     if (state.activeView === 'practice' && viewId !== 'practice') unmountRealPaperStudio();
+    if (canCurl) window.scrollTo({ top: 0, behavior: 'auto' });
+
     state.activeView = viewId;
-    document.querySelectorAll('.m-view').forEach(v => v.classList.toggle('active', v.id === `m-view-${viewId}`));
+    document.querySelectorAll('.m-view').forEach(v => {
+      if (canCurl && v === prevEl) v.classList.add('active');
+      else v.classList.toggle('active', v === nextEl);
+    });
     document.querySelectorAll('.m-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.view === viewId));
 
     if (viewId === 'knowledge') renderKnowledgeView();
@@ -2984,8 +3118,21 @@
     else if (viewId === 'mastery') renderMasteryView();
     else if (viewId === 'notebook') renderNotebookView();
 
+    if (canCurl) {
+      window.TechoPageTurn.turnLayers(shellEl, prevEl, nextEl, {
+        dir: turnDir,
+        mode: 'view',
+        paperStyle: 'grid',
+        duration: 520,
+        onComplete: () => {
+          if (state.activeView !== prevView) prevEl.classList.remove('active');
+        }
+      });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     updateGlobalBadges();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function init() {

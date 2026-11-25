@@ -494,6 +494,8 @@ body.dark .emerald-btn {
 
 /* ==================== MAIN SCROLL SHELL ==================== */
 .m-shell {
+  position: relative;
+  overflow-x: clip;
   max-width: 580px;
   margin: 0 auto;
   padding: 11px 13px calc(152px + env(safe-area-inset-bottom));
@@ -505,12 +507,17 @@ body.dark .emerald-btn {
 
 .m-view.active {
   display: block;
-  animation: mTechoTurn 0.2s ease-out;
 }
 
-@keyframes mTechoTurn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* 60FPS Canvas 3D Curved-Paper Page-Turn Utility Styles */
+.techo-curl-canvas {
+  position: absolute;
+  pointer-events: none;
+  display: block;
+}
+.techo-curl-snapshot {
+  pointer-events: none;
+  user-select: none;
 }
 
 /* ==================== STITCHED COTTON 5-TAB BOTTOM BOOKMARK DOCK ==================== */
@@ -3339,4 +3346,8 @@ body.dark .opt-btn.wrong .opt-key {
   height: 100vh;
   pointer-events: none;
   z-index: 990;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techo-curl-canvas { display: none !important; }
 }

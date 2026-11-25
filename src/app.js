@@ -269,6 +269,24 @@
     };
   }
 
+  const VIEW_ORDER = ['knowledge', 'vocab', 'practice', 'mastery', 'notebook'];
+  const VOCAB_MODE_ORDER = ['recite', 'flashcard', 'quiz', 'confusable'];
+  const NOTEBOOK_TAB_ORDER = ['wrong', 'vocab', 'favorites'];
+
+  function runSnapshotTurn(getTarget, updateFn, dir = 'next', paperStyle = 'grid', duration = 540, getTargetAfter = null) {
+    const el = typeof getTarget === 'function' ? getTarget() : getTarget;
+    if (el && window.TechoPageTurn && typeof window.TechoPageTurn.turnSnapshot === 'function') {
+      window.TechoPageTurn.turnSnapshot(el, updateFn, {
+        dir,
+        paperStyle,
+        duration,
+        getTargetAfter: getTargetAfter || (typeof getTarget === 'function' ? getTarget : null)
+      });
+    } else {
+      updateFn();
+    }
+  }
+
   const state = loadState();
   let reciteCtrl = null;
   let listenCtrl = null;
@@ -752,10 +770,29 @@
 
   function switchView(viewName, opts = {}) {
     stopAllAudioAndTimers();
+    const shellEl = document.querySelector('.app-shell');
+    if (shellEl && window.TechoPageTurn && typeof window.TechoPageTurn.cancelStageTurn === 'function') {
+      window.TechoPageTurn.cancelStageTurn(shellEl);
+    }
+    const prevView = state.activeView;
+    const prevIdx = VIEW_ORDER.indexOf(prevView);
+    const nextIdx = VIEW_ORDER.indexOf(viewName);
+    const turnDir = (prevView && prevView !== viewName && !opts.noAnim)
+      ? ((prevIdx >= 0 && nextIdx >= 0 && nextIdx < prevIdx) ? 'prev' : 'next')
+      : null;
+    const prevEl = prevView ? document.getElementById(`view-${prevView}`) : null;
+    const nextEl = document.getElementById(`view-${viewName}`);
+    const canCurl = Boolean(turnDir && prevEl && nextEl && shellEl && window.TechoPageTurn && typeof window.TechoPageTurn.turnLayers === 'function');
+
     if (viewName !== 'practice') unmountRealPaperStudio();
+    if (!opts.keepScroll && canCurl) window.scrollTo({ top: 0, behavior: 'auto' });
+
     state.activeView = viewName;
     document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.view === viewName));
-    document.querySelectorAll('.view-section').forEach(sec => sec.classList.toggle('active', sec.id === `view-${viewName}`));
+    document.querySelectorAll('.view-section').forEach(sec => {
+      if (canCurl && sec === prevEl) sec.classList.add('active');
+      else sec.classList.toggle('active', sec === nextEl);
+    });
 
     if (viewName === 'knowledge') {
       renderSprintRoadmap();
@@ -771,9 +808,22 @@
       renderNotebookView();
     }
 
+    if (canCurl) {
+      window.TechoPageTurn.turnLayers(shellEl, prevEl, nextEl, {
+        dir: turnDir,
+        mode: 'view',
+        paperStyle: 'grid',
+        duration: 620,
+        onComplete: () => {
+          if (state.activeView !== prevView) prevEl.classList.remove('active');
+        }
+      });
+    } else if (!opts.keepScroll) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     updateGlobalStats();
     syncCompanionContext();
-    if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /* ========================================================================
@@ -966,13 +1016,25 @@
 
   function selectSection(secId, scrollToReader = false) {
     if (!SECTIONS_MAP[secId]) return;
+    const prevIdx = SECTIONS_LIST.findIndex(s => s.id === state.activeSection);
+    const nextIdx = SECTIONS_LIST.findIndex(s => s.id === secId);
+    const dir = (state.activeSection !== secId && prevIdx >= 0 && nextIdx >= 0)
+      ? (nextIdx < prevIdx ? 'prev' : 'next')
+      : null;
     state.activeSection = secId;
-    renderZineDirectory();
-    renderKnowledgeReader();
-    syncCompanionContext();
     if (scrollToReader) {
-      document.getElementById('knowledge-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('knowledge-anchor')?.scrollIntoView({ behavior: 'auto', block: 'start' });
     }
+    const update = () => {
+      renderZineDirectory();
+      renderKnowledgeReader();
+    };
+    if (dir) {
+      runSnapshotTurn(() => document.getElementById('section-reader-host'), update, dir, 'grid', 540);
+    } else {
+      update();
+    }
+    syncCompanionContext();
   }
 
   function renderKnowledgeReader() {
@@ -1506,7 +1568,7 @@
       <div class="flashcard-wrap">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:12.6px;font-weight:700;color:var(--text-sec)">
           <span class="techo-stamp">索引词卡 · 第 ${state.flashCursor + 1} / ${state.flashQueue.length} 张</span>
-          <span>快捷键：Space 翻面 · 1 / 2 / 3 评级 · R 朗读</span>
+          <span>快捷键：Space 翻页 · 1 / 2 / 3 评级 · R 朗读</span>
         </div>
 
         <div class="fc-stack-shell">
@@ -1526,7 +1588,7 @@
                   </div>
                 </div>
                 <div style="text-align:center;font-size:12.4px;color:var(--text-muted);border-top:1px dashed var(--border-stitch);padding-top:10px">
-                  先在脑中回想中文释义与高频搭配，点击索引卡片任意处翻面核对
+                  先在脑中回想中文释义与高频搭配，点击索引卡片任意处向右翻页核对
                 </div>
               </div>
 
@@ -1678,31 +1740,69 @@
       </div>`;
   }
 
+  function toggleVocabFlashcard() {
+    const fcCard = document.getElementById('vocab-fc-card');
+    if (!fcCard) return;
+    const frontEl = fcCard.querySelector('.fc-front');
+    const backEl = fcCard.querySelector('.fc-back');
+    const nextFlipped = !state.flashFlipped;
+    state.flashFlipped = nextFlipped;
+    if (window.TechoPageTurn && typeof window.TechoPageTurn.turnLayers === 'function' && frontEl && backEl) {
+      const outgoing = nextFlipped ? frontEl : backEl;
+      const incoming = nextFlipped ? backEl : frontEl;
+      window.TechoPageTurn.turnLayers(fcCard, outgoing, incoming, {
+        dir: nextFlipped ? 'next' : 'prev',
+        mode: 'card',
+        paperStyle: 'ruled',
+        duration: 540,
+        onComplete: () => {
+          fcCard.classList.toggle('flipped', state.flashFlipped);
+        }
+      });
+    } else {
+      fcCard.classList.toggle('flipped', nextFlipped);
+    }
+  }
+
   function bindVocabEvents(host, words) {
+    const vocabPaper = state.vocabMode === 'flashcard' ? 'ruled' : 'grid';
     host.querySelectorAll('[data-vday]').forEach(btn => {
       btn.onclick = () => {
         stopAllAudioAndTimers();
-        state.vocabDay = Number(btn.dataset.vday) || 1;
-        state.vocabCustomIds = null;
-        state.reciteIdx = 0;
-        state.flashQueue = [];
-        state.quizWordId = null;
-        saveState();
-        renderVocabView();
+        const nextDay = Number(btn.dataset.vday) || 1;
+        const dir = nextDay < state.vocabDay ? 'prev' : 'next';
+        runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => {
+          state.vocabDay = nextDay;
+          state.vocabCustomIds = null;
+          state.reciteIdx = 0;
+          state.flashQueue = [];
+          state.quizWordId = null;
+          saveState();
+          renderVocabView();
+        }, dir, vocabPaper, 520);
       };
     });
     document.getElementById('btn-vocab-exit-custom')?.addEventListener('click', () => {
       stopAllAudioAndTimers();
-      state.vocabCustomIds = null;
-      state.reciteIdx = 0;
-      state.flashQueue = [];
-      renderVocabView();
+      runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => {
+        state.vocabCustomIds = null;
+        state.reciteIdx = 0;
+        state.flashQueue = [];
+        renderVocabView();
+      }, 'prev', vocabPaper, 520);
     });
     host.querySelectorAll('[data-vmode]').forEach(btn => {
       btn.onclick = () => {
         stopAllAudioAndTimers();
-        state.vocabMode = btn.dataset.vmode;
-        renderVocabView();
+        const nextMode = btn.dataset.vmode;
+        if (nextMode === state.vocabMode) return;
+        const pIdx = VOCAB_MODE_ORDER.indexOf(state.vocabMode);
+        const nIdx = VOCAB_MODE_ORDER.indexOf(nextMode);
+        const dir = (nIdx >= 0 && pIdx >= 0 && nIdx < pIdx) ? 'prev' : 'next';
+        runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => {
+          state.vocabMode = nextMode;
+          renderVocabView();
+        }, dir, nextMode === 'flashcard' ? 'ruled' : 'grid', 520);
         syncCompanionContext();
       };
     });
@@ -1718,12 +1818,12 @@
       document.getElementById('btn-recite-prev')?.addEventListener('click', () => {
         state.reciteIdx = (state.reciteIdx - 1 + words.length) % words.length;
         if (state.recitePlaying && reciteCtrl) reciteCtrl.jumpTo(state.reciteIdx);
-        else renderVocabView();
+        else runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'prev', 'grid', 500);
       });
       document.getElementById('btn-recite-next')?.addEventListener('click', () => {
         state.reciteIdx = (state.reciteIdx + 1) % words.length;
         if (state.recitePlaying && reciteCtrl) reciteCtrl.jumpTo(state.reciteIdx);
-        else renderVocabView();
+        else runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'next', 'grid', 500);
       });
       document.getElementById('btn-recite-toggle')?.addEventListener('click', () => {
         if (state.recitePlaying) {
@@ -1804,10 +1904,16 @@
       const curId = state.flashQueue[state.flashCursor];
       const curW = words.find(w => w.id === curId) || words[0];
       if (fcCard) {
+        if (window.TechoPageTurn && typeof window.TechoPageTurn.attachCornerPeek === 'function') {
+          window.TechoPageTurn.attachCornerPeek(fcCard, {
+            paperStyle: 'ruled',
+            getTopFace: () => fcCard.querySelector(state.flashFlipped ? '.fc-back' : '.fc-front'),
+            getBottomFace: () => fcCard.querySelector(state.flashFlipped ? '.fc-front' : '.fc-back')
+          });
+        }
         fcCard.onclick = (e) => {
           if (e.target.closest('#btn-fc-speak')) return;
-          state.flashFlipped = !state.flashFlipped;
-          fcCard.classList.toggle('flipped', state.flashFlipped);
+          toggleVocabFlashcard();
         };
       }
       document.getElementById('btn-fc-speak')?.addEventListener('click', (e) => {
@@ -1832,7 +1938,7 @@
             FireworksFX.launch(2, getEventOrigin(e, btn));
             reactXiaoKe('09_proud_streak', '本轮横线索引词卡已全部过完！核心词留存率又上一个台阶！', 4800);
           }
-          renderVocabView();
+          runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'next', 'ruled', 500);
         };
       });
     }
@@ -1867,7 +1973,7 @@
       });
       document.getElementById('btn-vq-next')?.addEventListener('click', () => {
         prepareVocabQuiz(words);
-        renderVocabView();
+        runSnapshotTurn(() => document.getElementById('vocab-mode-stage'), () => renderVocabView(), 'next', 'grid', 500);
         const nextW = VOCAB_WORDS.find(w => w.id === state.quizWordId);
         if (window.Cet4Speech && nextW) setTimeout(() => window.Cet4Speech.speakWord(nextW.word, { rate: 0.95 }), 160);
       });
@@ -2048,9 +2154,18 @@
           const nextMode = btn.dataset.pmode;
           if (nextMode === state.practiceMode) return;
           stopAllAudioAndTimers();
-          unmountRealPaperStudio();
-          state.practiceMode = nextMode;
-          renderPracticeView();
+          runSnapshotTurn(
+            () => document.getElementById('real-paper-studio-host') || document.getElementById('practice-host'),
+            () => {
+              unmountRealPaperStudio();
+              state.practiceMode = nextMode;
+              renderPracticeView();
+            },
+            nextMode === 'real_paper' ? 'next' : 'prev',
+            nextMode === 'real_paper' ? 'kraft' : 'grid',
+            560,
+            () => document.querySelector('#practice-host .q-card') || document.getElementById('real-paper-studio-host') || document.getElementById('practice-host')
+          );
         };
       });
       const studioHost = document.getElementById('real-paper-studio-host');
@@ -2123,7 +2238,7 @@
             return `<button type="button" class="skill-pill ${state.skillFilter === k ? 'active' : ''}" data-pskill="${k}">${lbl} (${cnt})</button>`;
           }).join('')}
         </div>
-        <span class="techo-stamp">自适应难度曲线 · 答完自动 3D 翻卡详解</span>
+        <span class="techo-stamp">自适应难度曲线 · 答完自动向右翻页详解</span>
       </div>
 
       <div class="practice-pager-bar">
@@ -2171,14 +2286,14 @@
 
     const footerHTML = isLocked
       ? `<div class="locked-notice-bar">
-          <span>本题已完成评定并锁定，右侧学习卡已自动 3D 翻转展示分步解析与高频词复盘</span>
+          <span>本题已完成评定并锁定，右侧手账卡已自动向右翻页展示分步解析与高频词复盘</span>
           <button type="button" class="submit-btn inline-next-btn" style="padding:7px 14px;font-size:12.4px">下一题 →</button>
         </div>`
       : `<div class="q-footer-bar">
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             ${(skill === 'cloze' || skill === 'translation' || skill === 'writing')
               ? `<button type="button" class="submit-btn" id="btn-submit-answer">提交并离线阅卷</button>`
-              : `<span style="font-size:12.4px;color:var(--text-muted);align-self:center">点选上方选项即提交锁定，右侧同步翻卡详解</span>`}
+              : `<span style="font-size:12.4px;color:var(--text-muted);align-self:center">点选上方选项即提交锁定，右侧同步翻页详解</span>`}
             <button type="button" class="secondary-btn" id="btn-toggle-peek">${inst.peekExplain ? '收起右侧解析' : '直接看解析'}</button>
           </div>
           <button type="button" class="btn-honey" style="padding:7px 13px;font-size:12.4px" id="btn-ask-xiaoke-hint">小克给条思路</button>
@@ -2573,7 +2688,7 @@
                 </div>
                 <div class="flip-formula-pill" style="font-size:12px">${escapeHTML(sum.formula || '')}</div>
               </div>
-              <button type="button" class="flip-cta-btn" id="btn-flip-front">点击翻卡 · 查看口诀与避坑便签</button>
+              <button type="button" class="flip-cta-btn" id="btn-flip-front">向右翻页 · 查看口诀与避坑便签</button>
             </div>
 
             <div class="flip-face flip-back">
@@ -2683,7 +2798,7 @@
         </div>
 
         <div class="re-foot">
-          <button type="button" class="secondary-btn" id="btn-re-flip-tab">${activeTab === 'explain' ? '翻看题型口诀' : '翻回本题详解'}</button>
+          <button type="button" class="secondary-btn" id="btn-re-flip-tab">${activeTab === 'explain' ? '翻页看题型口诀' : '翻回本题详解'}</button>
           <button type="button" class="submit-btn" id="btn-re-jump-sec" data-jump-sec="${escapeHTML(q.sectionId || '')}">回本节精讲 →</button>
         </div>
       </aside>`;
@@ -2704,18 +2819,27 @@
     const scene = rootEl.querySelector('.review-flip-scene');
     const card = scene && scene.querySelector('.review-flip-card');
     if (!scene || !card) return;
+    const front = scene.querySelector('.rf-front');
+    const back = scene.querySelector('.rf-back');
     let done = false;
     const settle = () => {
       if (done) return;
       done = true;
-      const front = scene.querySelector('.rf-front');
       if (front) front.remove();
       scene.classList.add('is-settled');
       card.classList.remove('flipped');
     };
-    requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('flipped')));
-    card.addEventListener('transitionend', e => { if (e.target === card && e.propertyName === 'transform') settle(); });
-    setTimeout(settle, 900);
+    if (window.TechoPageTurn && typeof window.TechoPageTurn.turnLayers === 'function' && front && back) {
+      window.TechoPageTurn.turnLayers(card, front, back, {
+        dir: 'next',
+        mode: 'card',
+        paperStyle: 'grid',
+        duration: 580,
+        onComplete: settle
+      });
+    } else {
+      settle();
+    }
   }
 
   function normalizeTranslationForGrader(q) {
@@ -2771,22 +2895,38 @@
     const goNext = () => {
       stopAllAudioAndTimers();
       state.cardFlipped = false;
-      if (state.practiceIdx < state.practiceHistory.length - 1) {
-        state.practiceIdx += 1;
-      } else {
-        drawNextQuestionInstance();
-        state.practiceIdx = state.practiceHistory.length - 1;
-      }
-      renderPracticeView();
-      window.scrollTo({ top: 64, behavior: 'smooth' });
+      window.scrollTo({ top: 64, behavior: 'auto' });
+      runSnapshotTurn(
+        () => host.querySelector('.q-card') || host,
+        () => {
+          if (state.practiceIdx < state.practiceHistory.length - 1) {
+            state.practiceIdx += 1;
+          } else {
+            drawNextQuestionInstance();
+            state.practiceIdx = state.practiceHistory.length - 1;
+          }
+          renderPracticeView();
+        },
+        'next',
+        'grid',
+        540
+      );
     };
     const goPrev = () => {
       if (state.practiceIdx <= 0) return;
       stopAllAudioAndTimers();
       state.cardFlipped = false;
-      state.practiceIdx -= 1;
-      renderPracticeView();
-      window.scrollTo({ top: 64, behavior: 'smooth' });
+      window.scrollTo({ top: 64, behavior: 'auto' });
+      runSnapshotTurn(
+        () => host.querySelector('.q-card') || host,
+        () => {
+          state.practiceIdx -= 1;
+          renderPracticeView();
+        },
+        'prev',
+        'grid',
+        540
+      );
     };
 
     host.querySelectorAll('[data-pmode]').forEach(btn => {
@@ -2794,23 +2934,48 @@
         const nextMode = btn.dataset.pmode;
         if (nextMode === state.practiceMode) return;
         stopAllAudioAndTimers();
-        state.practiceMode = nextMode;
-        renderPracticeView();
+        runSnapshotTurn(
+          () => host.querySelector('.q-card') || host,
+          () => {
+            state.practiceMode = nextMode;
+            renderPracticeView();
+          },
+          nextMode === 'real_paper' ? 'next' : 'prev',
+          nextMode === 'real_paper' ? 'kraft' : 'grid',
+          560,
+          () => document.getElementById('real-paper-studio-host') || host.querySelector('.q-card') || host
+        );
       };
     });
 
     host.querySelectorAll('[data-pskill]').forEach(btn => {
       btn.onclick = () => {
-        startAdaptiveSession(btn.dataset.pskill);
-        renderPracticeView();
+        runSnapshotTurn(
+          () => host.querySelector('.q-card') || host,
+          () => {
+            startAdaptiveSession(btn.dataset.pskill);
+            renderPracticeView();
+          },
+          'next',
+          'grid',
+          540
+        );
       };
     });
     document.getElementById('btn-prac-next')?.addEventListener('click', goNext);
     document.getElementById('btn-prac-prev')?.addEventListener('click', goPrev);
     host.querySelectorAll('.inline-next-btn').forEach(b => { b.onclick = goNext; });
     document.getElementById('btn-prac-reshuffle')?.addEventListener('click', () => {
-      startAdaptiveSession(state.skillFilter);
-      renderPracticeView();
+      runSnapshotTurn(
+        () => host.querySelector('.q-card') || host,
+        () => {
+          startAdaptiveSession(state.skillFilter);
+          renderPracticeView();
+        },
+        'next',
+        'grid',
+        540
+      );
       reactXiaoKe('04_cheer_correct', '已重新抽题，开启新一轮自适应真题精练！', 3400);
     });
 
@@ -3025,11 +3190,38 @@
 
     const flipCard = document.getElementById('summary-flip-card');
     if (flipCard) {
+      if (window.TechoPageTurn && typeof window.TechoPageTurn.attachCornerPeek === 'function') {
+        window.TechoPageTurn.attachCornerPeek(flipCard, {
+          paperStyle: 'grid',
+          getTopFace: () => flipCard.querySelector(state.cardFlipped ? '.flip-back' : '.flip-front'),
+          getBottomFace: () => flipCard.querySelector(state.cardFlipped ? '.flip-front' : '.flip-back')
+        });
+      }
       const toggleFlip = (e) => {
         if (e && e.target.closest('#btn-flip-jump-sec')) return;
-        state.cardFlipped = !state.cardFlipped;
+        const frontEl = flipCard.querySelector('.flip-front');
+        const backEl = flipCard.querySelector('.flip-back');
+        const nextFlipped = !state.cardFlipped;
+        state.cardFlipped = nextFlipped;
         flipCard.classList.remove('dealing');
-        flipCard.classList.toggle('flipped', state.cardFlipped);
+        if (window.TechoPageTurn && typeof window.TechoPageTurn.turnLayers === 'function' && frontEl && backEl) {
+          window.TechoPageTurn.turnLayers(
+            flipCard,
+            nextFlipped ? frontEl : backEl,
+            nextFlipped ? backEl : frontEl,
+            {
+              dir: nextFlipped ? 'next' : 'prev',
+              mode: 'card',
+              paperStyle: 'grid',
+              duration: 520,
+              onComplete: () => {
+                flipCard.classList.toggle('flipped', state.cardFlipped);
+              }
+            }
+          );
+        } else {
+          flipCard.classList.toggle('flipped', nextFlipped);
+        }
       };
       flipCard.onclick = toggleFlip;
       flipCard.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFlip(e); } };
@@ -3039,23 +3231,16 @@
     if (sidebar) {
       const switchRightTab = (nextKey) => {
         if (inst.reviewRightTab === nextKey) return;
+        const dir = nextKey === 'knowledge' ? 'next' : 'prev';
         inst.reviewRightTab = nextKey;
         const apply = () => {
           sidebar.querySelectorAll('.re-subtab-btn').forEach(b => b.classList.toggle('active', b.dataset.rpanel === nextKey));
           sidebar.querySelectorAll('.re-pane').forEach(p => p.classList.toggle('hidden', p.dataset.rpanelBody !== nextKey));
           const footBtn = document.getElementById('btn-re-flip-tab');
-          if (footBtn) footBtn.textContent = nextKey === 'explain' ? '翻看题型口诀' : '翻回本题详解';
+          if (footBtn) footBtn.textContent = nextKey === 'explain' ? '翻页看题型口诀' : '翻回本题详解';
         };
-        if (prefersReducedMotion()) { apply(); return; }
-        sidebar.classList.remove('re-flip-out', 're-flip-in');
-        void sidebar.offsetWidth;
-        sidebar.classList.add('re-flip-out');
-        setTimeout(() => {
-          apply();
-          sidebar.classList.remove('re-flip-out');
-          sidebar.classList.add('re-flip-in');
-          setTimeout(() => sidebar.classList.remove('re-flip-in'), 400);
-        }, 210);
+        const bodyEl = sidebar.querySelector('.re-body') || sidebar;
+        runSnapshotTurn(() => bodyEl, apply, dir, 'grid', 480);
       };
       sidebar.querySelectorAll('.re-subtab-btn').forEach(b => { b.onclick = () => switchRightTab(b.dataset.rpanel); });
       document.getElementById('btn-re-flip-tab')?.addEventListener('click', () => {
@@ -3287,7 +3472,17 @@
       </div>`;
 
     host.querySelectorAll('[data-nbtab]').forEach(btn => {
-      btn.onclick = () => { state.notebookTab = btn.dataset.nbtab; renderNotebookView(); };
+      btn.onclick = () => {
+        const nextTab = btn.dataset.nbtab;
+        if (nextTab === state.notebookTab) return;
+        const pIdx = NOTEBOOK_TAB_ORDER.indexOf(state.notebookTab);
+        const nIdx = NOTEBOOK_TAB_ORDER.indexOf(nextTab);
+        const dir = (nIdx >= 0 && pIdx >= 0 && nIdx < pIdx) ? 'prev' : 'next';
+        runSnapshotTurn(() => host.querySelector('.clippings-sheet'), () => {
+          state.notebookTab = nextTab;
+          renderNotebookView();
+        }, dir, 'grid', 500);
+      };
     });
     const searchEl = document.getElementById('nb-search-input');
     if (searchEl) {
@@ -3497,8 +3692,7 @@
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
       if (e.code === 'Space') {
         e.preventDefault();
-        const card = document.getElementById('vocab-fc-card');
-        if (card) { state.flashFlipped = !state.flashFlipped; card.classList.toggle('flipped', state.flashFlipped); }
+        toggleVocabFlashcard();
       } else if (e.key === '1') {
         document.querySelector('[data-fc-rate="unknown"]')?.click();
       } else if (e.key === '2') {

@@ -570,10 +570,23 @@ body.dark .nav-badge {
 }
 
 .techo-page-body {
+  position: relative;
+  overflow-x: clip;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* 60FPS Canvas 3D Curved-Paper Page-Turn Utility Styles */
+.techo-curl-canvas {
+  position: absolute;
+  pointer-events: none;
+  display: block;
+}
+.techo-curl-snapshot {
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Subtle Notebook Page Running Header */
@@ -2397,7 +2410,7 @@ body.dark .rq-st.fuzzy { color: var(--honey); }
 .fc-scene {
   position: relative;
   z-index: 2;
-  perspective: 1280px;
+  perspective: 1600px;
   width: 100%;
 }
 .fc-card {
@@ -2406,10 +2419,8 @@ body.dark .rq-st.fuzzy { color: var(--honey); }
   min-height: 372px;
   display: grid;
   transform-style: preserve-3d;
-  transition: transform 0.62s cubic-bezier(0.28, 0.1, 0.26, 1);
   cursor: pointer;
 }
-.fc-card.flipped { transform: rotateY(180deg); }
 
 .fc-face {
   grid-area: 1 / 1;
@@ -2446,7 +2457,26 @@ body.dark .rq-st.fuzzy { color: var(--honey); }
   border-bottom: 1px solid var(--margin-rose);
   pointer-events: none;
 }
-.fc-back { transform: rotateY(180deg); }
+.fc-front {
+  z-index: 2;
+  opacity: 1;
+  pointer-events: auto;
+}
+.fc-back {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.fc-card.flipped .fc-front {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.fc-card.flipped .fc-back {
+  z-index: 2;
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .fc-rate-row {
   display: grid;
@@ -3251,28 +3281,25 @@ body.dark .bank-tile .bt-code { color: var(--terracotta); }
   padding-bottom: 0;
   margin-bottom: 120px;
 }
-.flip-scene { perspective: 1180px; width: 100%; }
+.flip-scene { width: 100%; overflow: visible; }
 .flip-card {
   position: relative;
   width: 100%;
   display: grid;
-  transform-style: preserve-3d;
-  transition: transform 0.7s cubic-bezier(0.28, 0.1, 0.26, 1);
   cursor: pointer;
 }
-.flip-card.flipped { transform: rotateY(180deg); }
-.flip-card.dealing { animation: cardDealIn 0.4s cubic-bezier(0.28, 0.1, 0.26, 1); }
+.flip-card.dealing {
+  animation: cardDealIn 0.32s ease-out;
+}
 @keyframes cardDealIn {
-  0% { opacity: 0; transform: translateY(10px) rotateY(-5deg); }
-  100% { opacity: 1; transform: translateY(0) rotateY(0deg); }
+  0% { opacity: 0.72; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .flip-face {
   grid-area: 1 / 1;
   position: relative;
   min-width: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   border-radius: var(--radius-lg);
   overflow: hidden;
   display: flex;
@@ -3282,7 +3309,13 @@ body.dark .bank-tile .bt-code { color: var(--terracotta); }
   border: 1px solid var(--border-paper);
   box-shadow: var(--card-shadow);
 }
-.flip-front { padding: 18px 16px 16px; gap: 12px; }
+.flip-front {
+  padding: 18px 16px 16px;
+  gap: 12px;
+  z-index: 2;
+  opacity: 1;
+  pointer-events: auto;
+}
 .flip-front::before {
   content: "";
   position: absolute;
@@ -3331,7 +3364,21 @@ body.dark .bank-tile .bt-code { color: var(--terracotta); }
 }
 .flip-cta-btn:hover { background: var(--tab-honey); border-color: var(--honey); }
 
-.flip-back { transform: rotateY(180deg); }
+.flip-back {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.flip-card.flipped .flip-front {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.flip-card.flipped .flip-back {
+  z-index: 2;
+  opacity: 1;
+  pointer-events: auto;
+}
 .flip-back-head {
   padding: 13px 15px;
   color: var(--text);
@@ -3387,7 +3434,7 @@ body.dark .bank-tile .bt-code { color: var(--terracotta); }
 }
 .flip-back-foot button { flex: 1; justify-content: center; font-size: 12px; padding: 7.5px 9px; }
 
-/* Post-Answer Extended Review Sidebar + 3D Flip Entry */
+/* Post-Answer Extended Review Sidebar + Curved Page-Turn Entry */
 .review-flip-scene {
   position: sticky;
   top: 16px;
@@ -3395,21 +3442,30 @@ body.dark .bank-tile .bt-code { color: var(--terracotta); }
   width: 100%;
   min-width: 0;
   overflow: visible;
-  perspective: 1180px;
 }
 .review-flip-card {
   position: relative;
   display: grid;
   width: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.7s cubic-bezier(0.28, 0.1, 0.26, 1);
 }
-.review-flip-card.flipped { transform: rotateY(180deg); }
-.rf-face { grid-area: 1 / 1; min-width: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.rf-back { transform: rotateY(180deg) translateZ(1px); }
-.rf-front { pointer-events: none; transform: translateZ(1px); }
-.review-flip-scene.is-settled .review-flip-card,
-.review-flip-scene.is-settled .rf-back { transform: none !important; transition: none !important; transform-style: flat; }
+.rf-face { grid-area: 1 / 1; min-width: 0; }
+.rf-back {
+  z-index: 1;
+  opacity: 0;
+}
+.rf-front {
+  z-index: 2;
+  pointer-events: none;
+}
+.review-flip-card.flipped .rf-front {
+  z-index: 1;
+  opacity: 0;
+}
+.review-flip-card.flipped .rf-back,
+.review-flip-scene.is-settled .rf-back {
+  z-index: 2;
+  opacity: 1;
+}
 
 .review-explain-sidebar {
   width: 100%;
@@ -3542,17 +3598,6 @@ body.dark .ex-step-num { color: var(--terracotta); }
   font-size: 12px;
 }
 .ex-vocab-pill strong { font-family: var(--font-serif); color: var(--terracotta); margin-right: 4px; }
-
-@keyframes reFlipOut {
-  0% { transform: perspective(1180px) rotateY(0deg); opacity: 1; }
-  100% { transform: perspective(1180px) rotateY(90deg); opacity: 0.85; }
-}
-@keyframes reFlipIn {
-  0% { transform: perspective(1180px) rotateY(-90deg); opacity: 0.85; }
-  100% { transform: perspective(1180px) rotateY(0deg); opacity: 1; }
-}
-.review-explain-sidebar.re-flip-out { animation: reFlipOut 0.22s ease-in forwards; }
-.review-explain-sidebar.re-flip-in { animation: reFlipIn 0.38s ease-out forwards; }
 
 /* ==========================================================================
    VIEW 4: HOBONICHI MONTHLY TRACKER & 6 SOFT-ELEVATED LINEN SKILL CARDS
@@ -3945,4 +3990,11 @@ body.dark .folder-tab.active .folder-tab-cnt { color: var(--terracotta); }
   .word-bank-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .clippings-tabs { padding-left: 4px; overflow-x: auto; }
   .search-input { min-width: 0; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techo-curl-canvas { display: none !important; }
+  .flip-card.dealing {
+    animation: none !important;
+  }
 }

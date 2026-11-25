@@ -321,6 +321,26 @@ function verifyDomContract(label, htmlPath, appJsPath, engineJsPaths, expectedVi
   check(Boolean(bw.Cet4Speech && typeof bw.Cet4Speech.startVocabRecite === 'function'), `${label}: bundled Cet4Speech missing`);
   check(Boolean(bw.Cet4Grader && typeof bw.Cet4Grader.gradeWriting === 'function'), `${label}: bundled Cet4Grader missing`);
   check(Boolean(bw.XiaoKeAssistant && bw.XiaoKeAssistant.SPRITE_IDS.length === 10), `${label}: bundled XiaoKeAssistant missing 10 sprites`);
+  check(
+    Boolean(
+      bw.TechoPageTurn &&
+      typeof bw.TechoPageTurn.turnLayers === 'function' &&
+      typeof bw.TechoPageTurn.turnSnapshot === 'function' &&
+      typeof bw.TechoPageTurn.attachCornerPeek === 'function' &&
+      typeof bw.TechoPageTurn.computeFoldGeometry === 'function' &&
+      typeof bw.TechoPageTurn.getActiveCount === 'function' &&
+      typeof bw.TechoPageTurn.cancelAll === 'function'
+    ),
+    `${label}: bundled TechoPageTurn missing expected live API methods`
+  );
+  if (bw.TechoPageTurn && typeof bw.TechoPageTurn.computeFoldGeometry === 'function') {
+    const geom = bw.TechoPageTurn.computeFoldGeometry(960, 640, 0.45);
+    check(geom && Array.isArray(geom.unpeeledPoly) && geom.unpeeledPoly.length >= 3, `${label}: TechoPageTurn.computeFoldGeometry invalid unpeeledPoly`);
+    check(geom && Array.isArray(geom.peeledPoly) && geom.peeledPoly.length >= 3, `${label}: TechoPageTurn.computeFoldGeometry invalid peeledPoly`);
+    check(geom && Array.isArray(geom.flapPoly) && geom.flapPoly.length >= 3, `${label}: TechoPageTurn.computeFoldGeometry invalid flapPoly`);
+    check(geom && Array.isArray(geom.foldEdge) && geom.foldEdge.length === 2, `${label}: TechoPageTurn.computeFoldGeometry invalid foldEdge`);
+    check(geom && geom.lift > 20, `${label}: TechoPageTurn.computeFoldGeometry expected lift > 20, got ${geom && geom.lift}`);
+  }
 
   // Verify REAL_CET4_PAPERS (6 authentic papers / 342 items) & RealPaperStudio LIVE in VM execution
   check(Array.isArray(bw.REAL_CET4_PAPERS) && bw.REAL_CET4_PAPERS.length === 6,
@@ -366,7 +386,8 @@ console.log('=== [5/5] Hobonichi Cozy Desk DOM, Bundle, Real Papers & Hygiene Co
 const engineFiles = [
   path.join(SRC, 'xiaoke_assistant.js'),
   path.join(SRC, 'cet4_animations.js'),
-  path.join(SRC, 'real_paper_studio.js')
+  path.join(SRC, 'real_paper_studio.js'),
+  path.join(SRC, 'techo_pageturn.js')
 ];
 
 const pcInfo = verifyDomContract(
@@ -382,7 +403,7 @@ const pcInfo = verifyDomContract(
     { viewKey: 'notebook', sectionId: 'view-notebook' }
   ],
   EXPECTED_PC_ZINE_IDS,
-  13
+  14
 );
 
 const mobInfo = verifyDomContract(
@@ -398,11 +419,11 @@ const mobInfo = verifyDomContract(
     { viewKey: 'notebook', sectionId: 'm-view-notebook' }
   ],
   EXPECTED_MOBILE_ZINE_IDS,
-  12
+  13
 );
 
-// Verify Neo-Brutalist Zine CSS + engine injected styles hygiene (zero blur, zero emojis, zero mock-exam)
-for (const srcFile of ['style.css', 'mobile.css', 'cet4_animations.js', 'xiaoke_assistant.js', 'real_paper_studio.js']) {
+// Verify Hobonichi CSS + engine injected styles hygiene (zero blur, zero emojis, zero mock-exam)
+for (const srcFile of ['style.css', 'mobile.css', 'cet4_animations.js', 'xiaoke_assistant.js', 'real_paper_studio.js', 'techo_pageturn.js']) {
   const txt = fs.readFileSync(path.join(SRC, srcFile), 'utf8');
   check(!RE_MOCK_EXAM.test(txt), `src/${srcFile}: contains forbidden mock-exam selector/string`);
   check(!RE_EMOJI.test(txt), `src/${srcFile}: contains forbidden emoji`);

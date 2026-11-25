@@ -80,8 +80,12 @@
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
-      overflow-x: hidden;
+      position: relative;
+      overflow-x: clip;
     }
+
+    .techo-curl-canvas { position: absolute; pointer-events: none; display: block; }
+    .techo-curl-snapshot { pointer-events: none; user-select: none; }
     [data-theme="dark"] .rps-root,
     body.dark .rps-root {
       --rps-page: #181410;
@@ -1690,6 +1694,30 @@
   let localAudioUrl = null;
   let localAudioName = '';
   let toastTimerId = null;
+  const RPS_PART_ORDER = ['writing', 'listening', 'cloze', 'matching', 'careful', 'translation'];
+
+  function renderWithTurn(dir, scope) {
+    if (!hostEl) return;
+    const tp = typeof window !== 'undefined' ? window.TechoPageTurn : null;
+    if (!dir || !tp || typeof tp.turnSnapshot !== 'function') {
+      render();
+      return;
+    }
+    const getTarget = () => scope === 'part'
+      ? (hostEl.querySelector('.rps-part-body') || hostEl.querySelector('.rps-root'))
+      : hostEl.querySelector('.rps-root');
+    const target = getTarget();
+    if (!target) {
+      render();
+      return;
+    }
+    tp.turnSnapshot(target, render, {
+      dir,
+      paperStyle: 'kraft',
+      duration: scope === 'part' ? 500 : 560,
+      getTargetAfter: getTarget
+    });
+  }
 
   function injectStyles() {
     if (typeof document === 'undefined') return;
@@ -2737,7 +2765,7 @@
         title: paper.title,
         message: `已进入 ${paper.title}，按节奏稳扎稳打拿高分！`
       });
-      render();
+      renderWithTurn('next', 'root');
       return;
     }
 
@@ -2746,7 +2774,7 @@
       stopAudioAndTimers();
       activePaperId = btn.dataset.rpsReport;
       view = 'report';
-      render();
+      renderWithTurn('next', 'root');
       return;
     }
 
@@ -2769,7 +2797,7 @@
     if (btn.dataset.rpsBack) {
       stopAudioAndTimers();
       view = btn.dataset.rpsBack;
-      render();
+      renderWithTurn('prev', 'root');
       return;
     }
 
@@ -2790,9 +2818,16 @@
     // Switch Part tab
     if (btn.dataset.rpsPart) {
       stopAudioAndTimers();
-      prog.activePart = btn.dataset.rpsPart;
+      const nextPart = btn.dataset.rpsPart;
+      let turnDir = null;
+      if (nextPart !== prog.activePart) {
+        const pIdx = RPS_PART_ORDER.indexOf(prog.activePart);
+        const nIdx = RPS_PART_ORDER.indexOf(nextPart);
+        turnDir = (pIdx >= 0 && nIdx >= 0 && nIdx < pIdx) ? 'prev' : 'next';
+      }
+      prog.activePart = nextPart;
       savePaperProgress(storageKey(), paper.id, prog);
-      render();
+      renderWithTurn(turnDir, 'part');
       return;
     }
 
@@ -2807,10 +2842,16 @@
     if (btn.dataset.rpsJump) {
       const [partId, qStr] = btn.dataset.rpsJump.split(':');
       stopAudioAndTimers();
+      let jumpDir = null;
+      if (partId && partId !== prog.activePart) {
+        const pIdx = RPS_PART_ORDER.indexOf(prog.activePart);
+        const nIdx = RPS_PART_ORDER.indexOf(partId);
+        jumpDir = (pIdx >= 0 && nIdx >= 0 && nIdx < pIdx) ? 'prev' : 'next';
+      }
       prog.activePart = partId;
       if (partId === 'cloze' && Number(qStr) >= 26) focusedBlank = Number(qStr);
       savePaperProgress(storageKey(), paper.id, prog);
-      render();
+      renderWithTurn(jumpDir, 'part');
       if (Number(qStr) > 0 && typeof document !== 'undefined') {
         const target = document.getElementById(`rps-q-${partId}-${qStr}`);
         if (target && typeof target.scrollIntoView === 'function') {
@@ -2854,7 +2895,7 @@
           : `整卷折算 ${rep.estTotal710}/710，已为你定位最弱项，点击直达破题精讲！`
       });
       if (rep.passed425) fireFireworks(ev);
-      render();
+      renderWithTurn('next', 'root');
       return;
     }
 

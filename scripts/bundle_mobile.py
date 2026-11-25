@@ -1,6 +1,6 @@
 """
 CET-4 Sprint Mobile-First Pocket Hobonichi Techo Offline Bundler
-Inlines Xiao Ke sprites + manifest + mobile.css + all 11 JS modules into:
+Inlines Xiao Ke sprites + manifest + mobile.css + all 12 JS modules into:
   1. cet4-review/mobile.html
   2. c:\\Users\\zy134\\Desktop\\RealtimeAI\\四级冲刺_手机专属版.html
 """
@@ -24,6 +24,7 @@ JS_FILES = [
     "cet4_animations.js",
     "cet4_speech.js",
     "cet4_grader.js",
+    "techo_pageturn.js",
     "real_papers_data.js",
     "real_paper_studio.js",
     "xiaoke_assistant.js",
