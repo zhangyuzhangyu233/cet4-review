@@ -350,14 +350,54 @@ QUESTION_BANK.forEach((q, idx) => {
       `${ctx}: writing topicKeywords must have >= 4 entries`);
   }
 
-  // 1:1 EXPLAIN_DETAILS check
+  // 1:1 EXPLAIN_DETAILS check (deep bilingual + 4-option + paraphrase + cloze POS checks)
   const det = EXPLAIN_DETAILS[q.id];
   check(Boolean(det), `${ctx}: missing EXPLAIN_DETAILS['${q.id}']`);
   if (det) {
-    check(nonEmptyStr(det.why), `${ctx}: EXPLAIN_DETAILS.why empty`);
-    check(Array.isArray(det.steps) && det.steps.length >= 2 && det.steps.every(nonEmptyStr),
-      `${ctx}: EXPLAIN_DETAILS.steps must have >= 2 non-empty items`);
+    check(nonEmptyStr(det.why) && det.why.trim().length >= 60, `${ctx}: EXPLAIN_DETAILS.why too short`);
+    check(nonEmptyStr(det.stemZh), `${ctx}: EXPLAIN_DETAILS.stemZh empty`);
+    check(Array.isArray(det.steps) && det.steps.length >= 3 && det.steps.every(nonEmptyStr),
+      `${ctx}: EXPLAIN_DETAILS.steps must have >= 3 non-empty items`);
     check(nonEmptyStr(det.pitfall), `${ctx}: EXPLAIN_DETAILS.pitfall empty`);
+    check(Array.isArray(det.vocabHighlights) && det.vocabHighlights.length >= 3,
+      `${ctx}: EXPLAIN_DETAILS.vocabHighlights must have >= 3 items`);
+    if (q.skill === 'listening' || q.skill === 'reading') {
+      check(nonEmptyStr(det.evidenceZh), `${ctx}: EXPLAIN_DETAILS.evidenceZh empty`);
+      check(Array.isArray(det.optionBreakdown) && det.optionBreakdown.length === 4,
+        `${ctx}: optionBreakdown must have 4 items`);
+      if (Array.isArray(det.optionBreakdown) && det.optionBreakdown.length === 4) {
+        det.optionBreakdown.forEach((ob, obi) => {
+          const expK = String.fromCharCode(65 + obi);
+          check(ob && ob.key === expK, `${ctx}: optionBreakdown[${obi}].key expected ${expK}`);
+          check(nonEmptyStr(ob && ob.zh) && nonEmptyStr(ob && ob.reason), `${ctx}: optionBreakdown ${expK} missing zh/reason`);
+          const expV = expK === q.answer ? 'correct' : 'wrong';
+          check(ob && ob.verdict === expV, `${ctx}: optionBreakdown ${expK} verdict expected ${expV}`);
+        });
+      }
+      check(Array.isArray(det.paraphraseMap) && det.paraphraseMap.length >= 2,
+        `${ctx}: paraphraseMap must have >= 2 items`);
+    } else if (q.skill === 'matching') {
+      check(nonEmptyStr(det.evidenceZh), `${ctx}: matching EXPLAIN_DETAILS.evidenceZh empty`);
+      check(Array.isArray(det.paraphraseMap) && det.paraphraseMap.length >= 2,
+        `${ctx}: matching paraphraseMap must have >= 2 items`);
+    } else if (q.skill === 'cloze') {
+      check(nonEmptyStr(det.posNote), `${ctx}: cloze posNote empty`);
+      check(Boolean(det.blankDetails && typeof det.blankDetails === 'object'), `${ctx}: cloze blankDetails missing`);
+      if (det.blankDetails) {
+        (q.blanks || []).forEach(b => {
+          const be = det.blankDetails[String(b.num)];
+          check(Boolean(be && typeof be === 'object'), `${ctx}: blankDetails[${b.num}] missing`);
+          if (be) {
+            check(nonEmptyStr(be.sentenceZh) && nonEmptyStr(be.posRule) &&
+              nonEmptyStr(be.distractorExclude) && nonEmptyStr(be.wordUsage),
+              `${ctx} blank ${b.num}: missing sentenceZh/posRule/distractorExclude/wordUsage`);
+          }
+        });
+      }
+    } else if (q.skill === 'translation' || q.skill === 'writing') {
+      check(nonEmptyStr(det.evidenceZh) && nonEmptyStr(det.posNote),
+        `${ctx}: ${q.skill} EXPLAIN_DETAILS missing evidenceZh/posNote`);
+    }
   }
 });
 

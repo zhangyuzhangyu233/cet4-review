@@ -937,6 +937,113 @@
       font-size: 13px;
       line-height: 1.55;
     }
+    .rps-ex-zh,
+    .rps-ex-evzh,
+    .rps-ex-strategy,
+    .rps-ex-pos {
+      margin: 6px 0;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      line-height: 1.58;
+    }
+    .rps-ex-zh {
+      background: var(--rps-paper);
+      border: 1px solid var(--rps-border);
+      color: var(--rps-ink);
+    }
+    .rps-ex-evzh {
+      background: var(--rps-mint-soft);
+      border-left: 3px solid var(--rps-mint);
+      color: var(--rps-ink);
+    }
+    .rps-ex-strategy {
+      background: var(--rps-sticky);
+      border-left: 3px solid var(--rps-marigold);
+      color: var(--rps-ink);
+    }
+    .rps-ex-pos {
+      background: var(--rps-orange-soft);
+      border-left: 3px solid var(--rps-orange);
+      color: var(--rps-ink);
+    }
+    .rps-ex-opts {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .rps-ex-opt {
+      padding: 7px 10px;
+      border: 1px solid var(--rps-border);
+      border-radius: 7px;
+      background: var(--rps-paper);
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+    .rps-ex-opt.is-ok {
+      background: var(--rps-mint-soft);
+      border-color: rgba(63, 122, 92, 0.45);
+    }
+    .rps-ex-opt.is-bad {
+      background: var(--rps-surface);
+      border-color: var(--rps-border);
+    }
+    .rps-ex-opt-head {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 3px;
+      font-weight: 700;
+    }
+    .rps-ex-opt-k {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 21px;
+      height: 21px;
+      border-radius: 5px;
+      font-family: var(--rps-num);
+      font-size: 11.5px;
+      font-weight: 800;
+      background: var(--rps-subtle);
+      border: 1px solid var(--rps-border);
+    }
+    .rps-ex-opt.is-ok .rps-ex-opt-k {
+      background: var(--rps-mint);
+      color: #ffffff;
+      border-color: var(--rps-mint);
+    }
+    .rps-ex-bridges {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin: 8px 0;
+      padding: 8px 10px;
+      background: var(--rps-sticky);
+      border: 1px dashed var(--rps-stitch);
+      border-radius: 7px;
+      font-size: 12.5px;
+    }
+    .rps-ex-bridge {
+      line-height: 1.5;
+    }
+    .rps-ex-vocab {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 7px;
+    }
+    .rps-ex-vocab-chip {
+      padding: 3px 8px;
+      background: var(--rps-subtle);
+      border: 1px solid var(--rps-border);
+      border-radius: 6px;
+      font-size: 11.5px;
+      line-height: 1.4;
+      color: var(--rps-ink);
+    }
 
     /* Cloze Slots & Word Bank */
     .rps-blank-slot {
@@ -1013,29 +1120,64 @@
       margin-top: 2px;
     }
 
-    /* Matching Layout */
+    /* Matching Layout: Side-by-Side Sticky Split on Desktop */
+    .rps-match-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .rps-match-left {
+      position: sticky;
+      top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+    .rps-match-right {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .rps-match-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
     .rps-match-paras {
-      max-height: 440px;
+      max-height: 620px;
       overflow-y: auto;
       border: 1px solid var(--rps-border);
       border-radius: 9px;
       padding: 12px;
       background: var(--rps-paper);
-      margin-bottom: 14px;
     }
     .rps-mpara {
-      padding: 9px 12px;
-      margin-bottom: 8px;
+      padding: 10px 12px;
+      margin-bottom: 9px;
       background: var(--rps-surface);
       border: 1px solid var(--rps-border);
       border-radius: 8px;
       font-family: var(--rps-serif);
       font-size: 14.5px;
-      line-height: 1.7;
+      line-height: 1.72;
     }
     .rps-mpara.is-hl {
       background: var(--rps-mint-soft);
       border-color: var(--rps-mint);
+      box-shadow: 0 0 0 2px rgba(63, 122, 92, 0.14);
+    }
+    @media (max-width: 960px) {
+      .rps-match-split {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .rps-match-left {
+        position: static;
+      }
+      .rps-match-paras {
+        max-height: 400px;
+      }
     }
     .rps-mpara-lbl {
       display: inline-flex;
@@ -1691,6 +1833,7 @@
   let showModelWriting = false;
   let showModelTrans = false;
   let expandedMatchPara = null;
+  let expandedMatchStmt = null;
   let localAudioUrl = null;
   let localAudioName = '';
   let toastTimerId = null;
@@ -1816,6 +1959,93 @@
       }
     });
     return html;
+  }
+
+  function highlightMatchPara(paraText, keywords, quote) {
+    let html = escHtml(paraText);
+    const qRaw = String(quote || '').trim();
+    let quoteMatched = false;
+    if (qRaw.length >= 16) {
+      const qFull = escHtml(qRaw);
+      const qIdx = html.indexOf(qFull);
+      if (qIdx !== -1) {
+        html = html.slice(0, qIdx) + `<span class="rps-ev-mark">${qFull}</span>` + html.slice(qIdx + qFull.length);
+        quoteMatched = true;
+      } else {
+        const snippet = escHtml(qRaw.slice(0, 64));
+        const sIdx = html.indexOf(snippet);
+        if (sIdx !== -1) {
+          html = html.slice(0, sIdx) + `<span class="rps-ev-mark">${snippet}</span>` + html.slice(sIdx + snippet.length);
+          quoteMatched = true;
+        }
+      }
+    }
+    if (!quoteMatched) {
+      const kws = (Array.isArray(keywords) ? keywords : [])
+        .map(k => String(k || '').trim())
+        .filter(k => k.length >= 2)
+        .sort((a, b) => b.length - a.length);
+      if (kws.length > 0) {
+        const pats = kws.map(k => {
+          const esc = escHtml(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          return /^[A-Za-z0-9]/.test(k) && /[A-Za-z0-9]$/.test(k) ? `\\b${esc}\\b` : esc;
+        });
+        html = html.replace(new RegExp(`(${pats.join('|')})`, 'gi'), '<span class="rps-ev-mark">$1</span>');
+      }
+    }
+    return html;
+  }
+
+  function renderRpsRichExplainExtras(item) {
+    if (!item || typeof item !== 'object') return '';
+    let out = '';
+    if (item.preReadStrategy) {
+      out += `<div class="rps-ex-strategy"><strong>考场预读预判：</strong>${escHtml(item.preReadStrategy)}</div>`;
+    }
+    if (item.evidenceZh) {
+      out += `<div class="rps-ex-evzh"><strong>依据句精译：</strong>${escHtml(item.evidenceZh)}</div>`;
+    }
+    if (Array.isArray(item.optionBreakdown) && item.optionBreakdown.length > 0) {
+      const rows = item.optionBreakdown.map(ob => {
+        const isOk = String(ob.verdict || '').toLowerCase() === 'correct';
+        const tag = isOk ? '<span class="rps-badge-ok">正确答案</span>' : '<span class="rps-badge-err">干扰排除</span>';
+        return `
+          <div class="rps-ex-opt ${isOk ? 'is-ok' : 'is-bad'}">
+            <div class="rps-ex-opt-head">
+              <span class="rps-ex-opt-k">${escHtml(ob.key)}</span>
+              ${tag}
+              ${ob.zh ? `<span>${escHtml(ob.zh)}</span>` : ''}
+            </div>
+            <div>${escHtml(ob.reason || '')}</div>
+          </div>
+        `;
+      }).join('');
+      out += `<div class="rps-ex-opts">${rows}</div>`;
+    }
+    if (Array.isArray(item.paraphraseMap) && item.paraphraseMap.length > 0) {
+      const bridges = item.paraphraseMap.map(pm => {
+        if (typeof pm === 'string') return `<div class="rps-ex-bridge">· ${escHtml(pm)}</div>`;
+        const src = pm.from || pm.src || pm.source || pm.original || '';
+        const dst = pm.to || pm.dst || pm.target || pm.option || pm.paraphrase || '';
+        const note = pm.note ? `（${escHtml(pm.note)}）` : '';
+        return `<div class="rps-ex-bridge">· 原文 <strong>${escHtml(src)}</strong> 替换 <strong>${escHtml(dst)}</strong>${note}</div>`;
+      }).join('');
+      out += `<div class="rps-ex-bridges"><div style="font-weight:800;margin-bottom:2px;">同义替换链：</div>${bridges}</div>`;
+    }
+    if (item.pitfall) {
+      out += `<div class="rps-ex-pos"><strong>易错避坑：</strong>${escHtml(item.pitfall)}</div>`;
+    }
+    if (Array.isArray(item.vocabHighlights) && item.vocabHighlights.length > 0) {
+      const chips = item.vocabHighlights.map(v => {
+        if (typeof v === 'string') return `<span class="rps-ex-vocab-chip">${escHtml(v)}</span>`;
+        const w = escHtml(v.word || '');
+        const p = v.pos ? ` (${escHtml(v.pos)})` : '';
+        const m = v.meaning ? `：${escHtml(v.meaning)}` : '';
+        return `<span class="rps-ex-vocab-chip"><strong>${w}</strong>${p}${m}</span>`;
+      }).join('');
+      out += `<div class="rps-ex-vocab">${chips}</div>`;
+    }
+    return out;
   }
 
   /* -------------------- View 1: Paper Archive Lobby -------------------- */
@@ -2064,7 +2294,8 @@
           <strong>Directions:</strong> ${escHtml(w.directions)}
         </div>
         <details style="margin-bottom:12px;border:1px solid var(--rps-border);border-radius:9px;padding:9px 13px;background:var(--rps-surface);">
-          <summary style="cursor:pointer;font-weight:800;font-size:13px;">三段式审题逻辑蓝图 & 点击插入高分迁移句型</summary>
+          <summary style="cursor:pointer;font-weight:800;font-size:13px;">三段式审题逻辑蓝图 &amp; 点击插入高分迁移句型</summary>
+          ${w.promptZh ? `<div class="rps-ex-zh" style="margin-top:8px;"><strong>题干核心译意：</strong>${escHtml(w.promptZh)}</div>` : ''}
           <ol style="margin:8px 0 10px 18px;padding:0;font-size:13px;line-height:1.55;">${blueprintHtml}</ol>
           <div style="font-size:12px;font-weight:800;margin-bottom:4px;">点击下方句型贴片直接插入写作框：</div>
           <div class="rps-chip-row">${patChips}</div>
@@ -2084,7 +2315,10 @@
         ${showModelWriting ? `
           <div class="rps-grade-panel" style="background:var(--rps-surface);">
             <div style="font-weight:900;font-size:14px;margin-bottom:8px;">高分范文参考：${escHtml(w.modelTitle || w.title)}（${countWordsSimple(w.modelEssay)} 词）</div>
+            ${w.promptZh ? `<div class="rps-ex-zh"><strong>审题要求精译：</strong>${escHtml(w.promptZh)}</div>` : ''}
             <div class="rps-en-prose">${w.modelEssay.split(/\n\n+/).map(p => `<p>${escHtml(p)}</p>`).join('')}</div>
+            ${Array.isArray(w.structureTips) && w.structureTips.length ? `<div class="rps-ex-bridges"><div style="font-weight:800;margin-bottom:3px;">得分结构拆解：</div>${w.structureTips.map(t => `<div class="rps-ex-bridge">· ${escHtml(t)}</div>`).join('')}</div>` : ''}
+            ${Array.isArray(w.posPitfalls) && w.posPitfalls.length ? `<div class="rps-ex-pos"><div style="font-weight:800;margin-bottom:3px;">词性与语法高频避坑：</div>${w.posPitfalls.map(t => `<div>· ${escHtml(t)}</div>`).join('')}</div>` : ''}
           </div>
         ` : ''}
       </div>
@@ -2197,8 +2431,10 @@
                   <span>${ok ? '<span class="rps-badge-ok">回答正确</span>' : `<span class="rps-badge-err">${pick ? `答错（你选 ${pick}）` : '未作答'}</span>`} 正确答案：<strong>${q.answer}</strong></span>
                   ${!ok ? `<button type="button" class="rps-btn rps-btn-sm rps-btn-ghost" data-rps-add-wrong="listening:${q.num}">${SVG.bookmark}<span>加入错题本</span></button>` : ''}
                 </div>
+                ${q.stemZh ? `<div class="rps-ex-zh"><strong>题干/问题核心：</strong>${escHtml(q.stemZh)}</div>` : ''}
                 ${q.evidenceQuote ? `<div class="rps-quote">定位依据：${escHtml(q.evidenceQuote)}</div>` : ''}
                 <div>${escHtml(q.explain)}</div>
+                ${renderRpsRichExplainExtras(q)}
               </div>
             `;
           }
@@ -2287,7 +2523,11 @@
               <span><strong>Q${b.num}</strong> · ${ok ? '<span class="rps-badge-ok">正确</span>' : `<span class="rps-badge-err">${pick ? `你选 ${pick}` : '未填'}</span>`} 正解：<strong>${b.answer}) ${ansObj ? escHtml(ansObj.word) : ''}</strong>（${escHtml(b.posHint)}）</span>
               ${!ok ? `<button type="button" class="rps-btn rps-btn-sm rps-btn-ghost" data-rps-add-wrong="cloze:${b.num}">${SVG.bookmark}<span>加入错题本</span></button>` : ''}
             </div>
+            ${b.sentenceZh ? `<div class="rps-ex-zh"><strong>所在整句译文：</strong>${escHtml(b.sentenceZh)}</div>` : ''}
+            ${b.posRule ? `<div class="rps-ex-pos"><strong>词性语法判断：</strong>${escHtml(b.posRule)}</div>` : ''}
             <div>${escHtml(b.explain)}</div>
+            ${b.distractorExclude ? `<div class="rps-ex-strategy"><strong>同词性干扰词排除：</strong>${escHtml(b.distractorExclude)}</div>` : ''}
+            ${b.wordUsage ? `<div class="rps-ex-evzh"><strong>搭配与词义精记：</strong>${escHtml(b.wordUsage)}</div>` : ''}
           </div>
         `;
       }).join('');
@@ -2331,15 +2571,22 @@
     const ansMap = prog.matchingAnswers || {};
     const labels = mt.paragraphs.map(p => p.label);
 
+    const activeStmt = expandedMatchStmt
+      ? mt.statements.find(s => Number(s.num) === Number(expandedMatchStmt))
+      : null;
+
     const jumpBtns = labels.map(lb =>
       `<button type="button" class="rps-btn rps-btn-sm ${expandedMatchPara === lb ? 'is-active' : 'rps-btn-ghost'}" data-rps-scroll-para="${lb}">${lb}段</button>`
     ).join('');
 
     const parasHtml = mt.paragraphs.map(pa => {
       const hl = expandedMatchPara === pa.label;
+      const bodyHtml = hl && activeStmt
+        ? highlightMatchPara(pa.text, activeStmt.anchorKeywords, activeStmt.evidenceQuote)
+        : escHtml(pa.text);
       return `
         <div class="rps-mpara ${hl ? 'is-hl' : ''}" id="rps-mpara-${pa.label}">
-          <span class="rps-mpara-lbl">${pa.label}</span>${escHtml(pa.text)}
+          <span class="rps-mpara-lbl">${pa.label}</span>${bodyHtml}
         </div>
       `;
     }).join('');
@@ -2373,12 +2620,15 @@
             <div class="rps-explain-top">
               <span>${ok ? '<span class="rps-badge-ok">匹配正确</span>' : `<span class="rps-badge-err">${pick ? `你选 ${pick} 段` : '未作答'}</span>`} 正确段落：<strong>${st.answer} 段</strong></span>
               <span style="display:inline-flex;gap:6px;">
-                <button type="button" class="rps-btn rps-btn-sm rps-btn-ghost" data-rps-scroll-para="${st.answer}">定位到 ${st.answer} 段</button>
+                <button type="button" class="rps-btn rps-btn-sm rps-btn-ghost" data-rps-scroll-para="${st.answer}" data-rps-scroll-q="${st.num}">定位到 ${st.answer} 段</button>
                 ${!ok ? `<button type="button" class="rps-btn rps-btn-sm rps-btn-ghost" data-rps-add-wrong="matching:${st.num}">${SVG.bookmark}<span>加入错题本</span></button>` : ''}
               </span>
             </div>
             ${kwChips ? `<div class="rps-topic-row" style="margin:4px 0 6px;">${kwChips}</div>` : ''}
+            ${st.stemZh ? `<div class="rps-ex-zh"><strong>陈述句译文：</strong>${escHtml(st.stemZh)}</div>` : ''}
+            ${st.evidenceQuote ? `<div class="rps-quote">段落依据原句：${escHtml(st.evidenceQuote)}</div>` : ''}
             <div>${escHtml(st.explain)}</div>
+            ${renderRpsRichExplainExtras(st)}
           </div>
         `;
       }
@@ -2398,10 +2648,16 @@
           <h3 class="rps-card-title">${SVG.book} Part III Section B 长篇阅读匹配 — ${escHtml(mt.passageTitle)}</h3>
           <span class="rps-sticker">Q36–Q45 · 71 分</span>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">${jumpBtns}</div>
-        <div class="rps-match-paras" id="rps-match-scroll">${parasHtml}</div>
-        <div style="font-weight:900;font-size:14px;margin-bottom:10px;">10 道信息匹配题（先抓定位词，再点选对应段落字母）：</div>
-        ${stmtsHtml || '<div class="rps-notice">长篇匹配无错题！</div>'}
+        <div class="rps-match-split">
+          <div class="rps-match-left">
+            <div class="rps-match-jump">${jumpBtns}</div>
+            <div class="rps-match-paras" id="rps-match-scroll">${parasHtml}</div>
+          </div>
+          <div class="rps-match-right">
+            <div style="font-weight:900;font-size:14px;margin-bottom:10px;">10 道信息匹配题（左读段落右选字母，先抓定位词）：</div>
+            ${stmtsHtml || '<div class="rps-notice">长篇匹配无错题！</div>'}
+          </div>
+        </div>
         <div style="display:flex;justify-content:flex-end;margin-top:8px;">
           <button type="button" class="rps-btn rps-btn-orange" data-rps-part="careful">${SVG.arrowRight}<span>前往仔细阅读 46-55</span></button>
         </div>
@@ -2456,8 +2712,10 @@
                 <span>${ok ? '<span class="rps-badge-ok">精准命中</span>' : `<span class="rps-badge-err">${pick ? `答错（你选 ${pick}）` : '未作答'}</span>`} 正确答案：<strong>${q.answer}</strong> <span class="rps-trap-pill">防坑：${escHtml(q.trapType)}</span></span>
                 ${!ok ? `<button type="button" class="rps-btn rps-btn-sm rps-btn-ghost" data-rps-add-wrong="careful:${q.num}">${SVG.bookmark}<span>加入错题本</span></button>` : ''}
               </div>
+              ${q.stemZh ? `<div class="rps-ex-zh"><strong>题干译文：</strong>${escHtml(q.stemZh)}</div>` : ''}
               <div class="rps-quote">原文证据句：${escHtml(q.evidenceQuote)}</div>
               <div>${escHtml(q.explain)}</div>
+              ${renderRpsRichExplainExtras(q)}
             </div>
           `;
         }
@@ -2546,7 +2804,9 @@
           <div class="rps-grade-panel" style="background:var(--rps-surface);">
             <div style="font-weight:900;font-size:14px;margin-bottom:8px;">高分参考译文：</div>
             <div class="rps-en-prose" style="margin-bottom:12px;">${escHtml(tr.referenceTranslation)}</div>
-            <div style="font-weight:900;font-size:13.5px;margin-bottom:8px;">逐句拆句重组精讲：</div>
+            ${Array.isArray(tr.grammarFocus) && tr.grammarFocus.length ? `<div class="rps-ex-bridges"><div style="font-weight:800;margin-bottom:3px;">核心语法与句型考点：</div>${tr.grammarFocus.map(g => `<div class="rps-ex-bridge">· ${escHtml(g)}</div>`).join('')}</div>` : ''}
+            ${Array.isArray(tr.posPitfalls) && tr.posPitfalls.length ? `<div class="rps-ex-pos"><div style="font-weight:800;margin-bottom:3px;">词性与翻译易错避坑：</div>${tr.posPitfalls.map(p => `<div>· ${escHtml(p)}</div>`).join('')}</div>` : ''}
+            <div style="font-weight:900;font-size:13.5px;margin:10px 0 8px;">逐句拆句重组精讲：</div>
             ${bdHtml}
           </div>
         ` : ''}
@@ -3070,13 +3330,22 @@
       return;
     }
 
-    // Matching interactions
+    // Matching interactions: scroll paragraph box internally instead of yanking window
     if (btn.dataset.rpsScrollPara) {
       expandedMatchPara = btn.dataset.rpsScrollPara;
+      expandedMatchStmt = btn.dataset.rpsScrollQ ? Number(btn.dataset.rpsScrollQ) : null;
       render();
       if (typeof document !== 'undefined') {
+        const box = document.getElementById('rps-match-scroll');
         const el = document.getElementById(`rps-mpara-${expandedMatchPara}`);
-        if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (box && el && typeof el.getBoundingClientRect === 'function' && typeof box.getBoundingClientRect === 'function') {
+          const topOffset = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 10;
+          if (typeof box.scrollTo === 'function') {
+            box.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
+          } else {
+            box.scrollTop = Math.max(0, topOffset);
+          }
+        }
       }
       return;
     }

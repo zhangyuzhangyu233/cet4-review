@@ -1974,6 +1974,70 @@ body.dark .m-done-stamp {
   margin-top: 6px;
 }
 
+/* Deep Structured Explanations (Mobile) */
+.m-ex-zh-card {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  background: var(--bg-paper-inset);
+  font-size: 12.4px;
+  line-height: 1.58;
+  color: var(--text);
+}
+.m-ex-opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+.m-ex-opt-row {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: 12.2px;
+  line-height: 1.55;
+}
+.m-ex-opt-row.ok {
+  background: var(--mint-soft);
+  border-color: var(--mint-border);
+}
+.m-ex-opt-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10.6px;
+  font-weight: 800;
+  margin-right: 5px;
+  background: var(--coral-soft);
+  color: var(--coral);
+}
+.m-ex-opt-row.ok .m-ex-opt-badge {
+  background: var(--mint);
+  color: #fcf9f1;
+}
+.m-ex-bridge-item {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--mint-border);
+  background: var(--bg-paper-inset);
+  font-size: 12px;
+  line-height: 1.52;
+  margin-bottom: 5px;
+}
+.m-ex-pos-box {
+  margin: 8px 0;
+  padding: 8px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--marigold-border);
+  border-left: 3px solid var(--marigold);
+  background: var(--bg-sticky);
+  font-size: 12.2px;
+  line-height: 1.56;
+}
+
 .m-colloc-chip {
   padding: 3px 9px;
   border-radius: var(--radius-xs);
@@ -2615,13 +2679,34 @@ body.dark .m-play-fab.playing {
 }
 
 /* Matching Paragraphs & Letter Stamps */
+.m-match-jump-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.m-match-para-scroll {
+  max-height: 410px;
+  overflow-y: auto;
+  padding-right: 2px;
+  margin-bottom: 10px;
+}
+
 .m-match-para {
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-elevated);
   margin-bottom: 7px;
   overflow: hidden;
   box-shadow: var(--shadow-xs);
+}
+
+.m-match-para.is-jump-hl {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
 }
 
 .m-match-para.evidence {

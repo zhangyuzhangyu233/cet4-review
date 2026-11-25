@@ -2450,12 +2450,22 @@
             <span class="score-seal ${ev.passed ? 'pass' : 'fail'}">${ev.passed ? '已达标' : '待复盘'}</span>
           </div>
           <div style="font-size:13px;color:var(--text-sec);margin-bottom:10px">${escapeHTML(ev.feedback || '')}</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px">
-            ${(ev.perBlank || []).map(pb => `
-              <div style="padding:8px 11px;border:1px solid ${pb.correct ? 'rgba(63,122,92,0.34)' : 'rgba(194,77,77,0.34)'};border-radius:var(--radius-xs);background:${pb.correct ? 'var(--sage-soft)' : 'var(--rose-soft)'};color:var(--text);font-size:12.4px">
-                <div><strong>第 ${pb.num} 空：</strong>正解 <b>${pb.answer}. ${escapeHTML(pb.word)}</b> (${escapeHTML(pb.pos || pb.posHint || '')})${!pb.correct ? ` · 你填 ${pb.user || '未填'}` : ''}</div>
-                ${pb.explain ? `<div style="margin-top:3px;color:var(--text-sec)">${escapeHTML(pb.explain)}</div>` : ''}
-              </div>`).join('')}
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
+            ${(ev.perBlank || []).map(pb => {
+              const bd = EXPLAIN_DETAILS[q.id]?.blankDetails?.[String(pb.num)] || null;
+              return `
+                <div style="padding:9px 11px;border:1px solid ${pb.correct ? 'rgba(63,122,92,0.34)' : 'rgba(194,77,77,0.34)'};border-radius:var(--radius-xs);background:${pb.correct ? 'var(--sage-soft)' : 'var(--rose-soft)'};color:var(--text);font-size:12.4px">
+                  <div><strong>第 ${pb.num} 空：</strong>正解 <b>${pb.answer}. ${escapeHTML(pb.word)}</b> (${escapeHTML(pb.pos || pb.posHint || '')})${!pb.correct ? ` · 你填 ${pb.user || '未填'}` : ''}</div>
+                  ${pb.explain ? `<div style="margin-top:4px;color:var(--text-sec)">${escapeHTML(pb.explain)}</div>` : ''}
+                  ${bd ? `
+                    <div class="cloze-blank-meta">
+                      ${bd.sentenceZh ? `<div><strong>句意：</strong>${escapeHTML(bd.sentenceZh)}</div>` : ''}
+                      ${bd.posRule ? `<div><strong>词性锁定：</strong>${escapeHTML(bd.posRule)}</div>` : ''}
+                      ${bd.distractorExclude ? `<div><strong>同词性排雷：</strong>${escapeHTML(bd.distractorExclude)}</div>` : ''}
+                      ${bd.wordUsage ? `<div><strong>词条考点：</strong>${escapeHTML(bd.wordUsage)}</div>` : ''}
+                    </div>` : ''}
+                </div>`;
+            }).join('')}
           </div>
         </div>`;
     }
@@ -2474,10 +2484,17 @@
     const saved = inst.ans || null;
     const collapsedMap = inst.draft.collapsedParas || {};
     const ansLabel = String(q.answer || '').trim().toUpperCase();
+    const anyOpen = paras.some(p => {
+      const lbl = String(p.label || '').toUpperCase();
+      return (isLocked && lbl === ansLabel) || !collapsedMap[lbl];
+    });
 
     return `
       <div class="matching-statement-box">
-        <div style="font-family:var(--font-sans);font-size:11.5px;color:var(--terracotta);font-weight:700;margin-bottom:4px">待匹配陈述句（请定位对应段落）</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="font-family:var(--font-sans);font-size:11.5px;color:var(--terracotta);font-weight:700">待匹配陈述句（先抓专有名词 / 数字定位段落）</span>
+          ${isLocked ? `<button type="button" class="matching-jump-chip active" data-jump-para="${ansLabel}">定位依据段 ${ansLabel}</button>` : ''}
+        </div>
         <div>${escapeHTML(q.statement || '')}</div>
         ${isLocked && Array.isArray(q.anchorKeywords) && q.anchorKeywords.length
           ? `<div style="margin-top:8px;font-family:var(--font-sans);font-size:12px">定位锚点词：${q.anchorKeywords.map(k => `<span class="signal-mark">${escapeHTML(k)}</span>`).join(' ')}</div>`
@@ -2485,8 +2502,16 @@
       </div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-        <strong style="font-family:var(--font-serif);font-size:15px">${escapeHTML(q.passageTitle || '长篇阅读段落')}</strong>
-        <button type="button" class="secondary-btn" id="btn-match-toggle-all" style="padding:4.5px 10px;font-size:11.8px">展开 / 折叠全部段落</button>
+        <strong style="font-family:var(--font-serif);font-size:15px">${escapeHTML(q.passageTitle || '长篇阅读段落')}（共 ${paras.length} 段）</strong>
+        <button type="button" class="secondary-btn" id="btn-match-toggle-all" style="padding:4.5px 10px;font-size:11.8px">${anyOpen ? '全部折叠' : '全部展开'}</button>
+      </div>
+
+      <div class="matching-jump-strip" aria-label="快速跳转段落">
+        <span style="font-size:11.5px;color:var(--text-muted);font-weight:700">快速跳段：</span>
+        ${paras.map(p => {
+          const lbl = String(p.label || '').toUpperCase();
+          return `<button type="button" class="matching-jump-chip ${isLocked && lbl === ansLabel ? 'active' : ''}" data-jump-para="${lbl}">${lbl}</button>`;
+        }).join('')}
       </div>
 
       <div class="matching-para-list">
@@ -2745,12 +2770,66 @@
       }
     }
 
+    const rawEvidence = q.evidenceQuote || q.evidenceSentence || (detail && detail.evidenceQuote) || '';
     const detailHTML = detail
       ? `<div class="explain-detail-card">
+          ${detail.stemZh ? `
+            <div class="ex-zh-box">
+              <div><strong>题干/任务译文：</strong>${escapeHTML(detail.stemZh)}</div>
+              ${(rawEvidence || detail.evidenceZh) ? `
+                <div class="ex-zh-ev">
+                  ${rawEvidence ? `<div style="font-family:var(--font-serif);color:var(--text);margin-bottom:3px"><strong>原文依据：</strong>${escapeHTML(rawEvidence)}</div>` : ''}
+                  ${detail.evidenceZh ? `<div><strong>依据精译：</strong>${escapeHTML(detail.evidenceZh)}</div>` : ''}
+                </div>` : ''}
+            </div>` : (detail.evidenceZh ? `
+            <div class="ex-zh-box">
+              ${rawEvidence ? `<div style="font-family:var(--font-serif);margin-bottom:3px"><strong>原文依据：</strong>${escapeHTML(rawEvidence)}</div>` : ''}
+              <div><strong>参考译文：</strong>${escapeHTML(detail.evidenceZh)}</div>
+            </div>` : '')}
+
+          ${q.trapType ? `<div style="margin-bottom:8px"><span class="techo-stamp rose">干扰陷阱类型：${escapeHTML(q.trapType)}</span></div>` : ''}
+
           <div style="margin-bottom:9px">
             <span class="ex-sec-tag why">核心破题点</span>
             <p style="font-size:13px;color:var(--text);font-weight:600;line-height:1.68">${escapeHTML(detail.why)}</p>
           </div>
+
+          ${Array.isArray(detail.optionBreakdown) && detail.optionBreakdown.length ? `
+            <div style="margin-bottom:9px">
+              <span class="ex-sec-tag steps">A / B / C / D 逐项精析与排雷</span>
+              <div class="ex-opt-list">
+                ${detail.optionBreakdown.map(ob => {
+                  const isOk = ob.verdict === 'correct';
+                  return `
+                    <div class="ex-opt-row ${isOk ? 'ok' : 'bad'}">
+                      <div class="ex-opt-head">
+                        <span class="ex-opt-key">${escapeHTML(ob.key)}</span>
+                        <span class="ex-opt-tag">${isOk ? '正解' : '干扰项'}</span>
+                        <strong>${escapeHTML(ob.zh || '')}</strong>
+                      </div>
+                      <div style="color:var(--text-sec)">${escapeHTML(ob.reason || '')}</div>
+                    </div>`;
+                }).join('')}
+              </div>
+            </div>` : ''}
+
+          ${Array.isArray(detail.paraphraseMap) && detail.paraphraseMap.length ? `
+            <div style="margin-bottom:9px">
+              <span class="ex-sec-tag why">同义改写对照桥</span>
+              <div class="ex-para-list">
+                ${detail.paraphraseMap.map(pm => `
+                  <div class="ex-para-bridge">
+                    <strong>${escapeHTML(pm.from || '')}</strong> → <strong>${escapeHTML(pm.to || '')}</strong>
+                    ${pm.note ? `<div style="color:var(--text-sec);margin-top:2px">${escapeHTML(pm.note)}</div>` : ''}
+                  </div>`).join('')}
+              </div>
+            </div>` : ''}
+
+          ${detail.posNote ? `
+            <div class="ex-pos-box">
+              <strong>词性与语法防坑提示：</strong>${escapeHTML(detail.posNote)}
+            </div>` : ''}
+
           <div style="margin-bottom:9px">
             <span class="ex-sec-tag steps">逐步破题路径</span>
             <ol class="ex-step-list">
@@ -3124,6 +3203,23 @@
 
     if (skill === 'matching') {
       if (!inst.draft.collapsedParas) inst.draft.collapsedParas = {};
+      const scrollToMatchPara = (lbl) => {
+        const listEl = host.querySelector('.matching-para-list');
+        const item = listEl && listEl.querySelector(`[data-para-item="${lbl}"]`);
+        if (!item) return;
+        if (item.classList.contains('collapsed')) {
+          inst.draft.collapsedParas[lbl] = false;
+          item.classList.remove('collapsed');
+          const lblSpan = item.querySelector('.matching-para-head span:last-child');
+          if (lblSpan) lblSpan.textContent = '收起';
+        }
+        listEl.querySelectorAll('.matching-para-item').forEach(n => n.classList.remove('is-jump-hl'));
+        item.classList.add('is-jump-hl');
+        listEl.scrollTo({ top: Math.max(0, item.offsetTop - listEl.offsetTop - 8), behavior: 'smooth' });
+      };
+      host.querySelectorAll('[data-jump-para]').forEach(btn => {
+        btn.onclick = () => scrollToMatchPara(btn.dataset.jumpPara);
+      });
       host.querySelectorAll('[data-toggle-para]').forEach(btn => {
         btn.onclick = () => {
           const lbl = btn.dataset.togglePara;
@@ -3137,6 +3233,15 @@
         paras.forEach(p => { inst.draft.collapsedParas[String(p.label).toUpperCase()] = anyOpen; });
         renderPracticeView();
       });
+      if (isLocked) {
+        const ansItem = host.querySelector('.matching-para-item.is-answer');
+        const listEl = host.querySelector('.matching-para-list');
+        if (ansItem && listEl) {
+          requestAnimationFrame(() => {
+            listEl.scrollTo({ top: Math.max(0, ansItem.offsetTop - listEl.offsetTop - 8), behavior: 'smooth' });
+          });
+        }
+      }
     }
 
     if ((skill === 'translation' || skill === 'writing') && !isLocked) {

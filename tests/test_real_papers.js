@@ -229,7 +229,28 @@ REAL_CET4_PAPERS.forEach((paper, idx) => {
             });
           }
           check(VALID_ABCD.has(q.answer), `${pid} Q${q.num}: invalid answer '${q.answer}'`);
-          check(nonEmptyStr(q.explain), `${pid} Q${q.num}: missing explain`);
+          check(nonEmptyStr(q.explain) && q.explain.trim().length >= 40, `${pid} Q${q.num}: missing or short explain`);
+          check(Array.isArray(q.optionBreakdown) && q.optionBreakdown.length === 4,
+            `${pid} Q${q.num}: optionBreakdown must have 4 entries`);
+          if (Array.isArray(q.optionBreakdown) && q.optionBreakdown.length === 4) {
+            q.optionBreakdown.forEach((ob, obi) => {
+              const expK = String.fromCharCode(65 + obi);
+              check(ob && ob.key === expK, `${pid} Q${q.num}: optionBreakdown[${obi}] expected ${expK}`);
+              check(nonEmptyStr(ob && ob.zh) && nonEmptyStr(ob && ob.reason),
+                `${pid} Q${q.num} opt ${expK}: missing zh/reason`);
+              check(ob && ob.verdict === (expK === q.answer ? 'correct' : 'wrong'),
+                `${pid} Q${q.num} opt ${expK}: verdict mismatch`);
+            });
+          }
+          check(Array.isArray(q.vocabHighlights) && q.vocabHighlights.length >= 2,
+            `${pid} Q${q.num}: vocabHighlights must have >= 2 entries`);
+          if (expectScript) {
+            check(nonEmptyStr(q.stemZh) && nonEmptyStr(q.evidenceZh) &&
+              Array.isArray(q.paraphraseMap) && q.paraphraseMap.length >= 1,
+              `${pid} Q${q.num}: scripted listening missing stemZh/evidenceZh/paraphraseMap`);
+          } else {
+            check(nonEmptyStr(q.preReadStrategy), `${pid} Q${q.num}: missing preReadStrategy`);
+          }
         });
       });
     });
@@ -285,6 +306,9 @@ REAL_CET4_PAPERS.forEach((paper, idx) => {
       usedClozeCodes.add(b.answer);
       check(cl.passageHtml.includes(`{{${b.num}}}`), `${pid} Q${b.num}: cloze passageHtml missing '{{${b.num}}}'`);
       check(nonEmptyStr(b.posHint) && nonEmptyStr(b.explain), `${pid} Q${b.num}: cloze blank missing posHint/explain`);
+      check(nonEmptyStr(b.sentenceZh) && nonEmptyStr(b.posRule) &&
+        nonEmptyStr(b.distractorExclude) && nonEmptyStr(b.wordUsage),
+        `${pid} Q${b.num}: cloze blank missing sentenceZh/posRule/distractorExclude/wordUsage`);
     });
   }
 
@@ -314,6 +338,9 @@ REAL_CET4_PAPERS.forEach((paper, idx) => {
       check(nonEmptyStr(st.text) && nonEmptyStr(st.explain), `${pid} Q${st.num}: matching missing text/explain`);
       check(paraLabelSet.has(st.answer), `${pid} Q${st.num}: matching answer '${st.answer}' not a valid paragraph label`);
       check(Array.isArray(st.anchorKeywords) && st.anchorKeywords.length >= 1, `${pid} Q${st.num}: missing anchorKeywords`);
+      check(nonEmptyStr(st.stemZh) && nonEmptyStr(st.evidenceQuote) && nonEmptyStr(st.evidenceZh) &&
+        nonEmptyStr(st.pitfall) && Array.isArray(st.paraphraseMap) && st.paraphraseMap.length >= 2,
+        `${pid} Q${st.num}: matching missing stemZh/evidenceQuote/evidenceZh/pitfall/paraphraseMap`);
     });
   }
 
@@ -345,6 +372,19 @@ REAL_CET4_PAPERS.forEach((paper, idx) => {
         check(VALID_ABCD.has(q.answer), `${pid} Q${q.num}: invalid answer '${q.answer}'`);
         check(nonEmptyStr(q.evidenceQuote) && nonEmptyStr(q.trapType) && nonEmptyStr(q.explain),
           `${pid} Q${q.num}: missing evidenceQuote/trapType/explain`);
+        check(nonEmptyStr(q.stemZh) && nonEmptyStr(q.evidenceZh) &&
+          Array.isArray(q.optionBreakdown) && q.optionBreakdown.length === 4 &&
+          Array.isArray(q.paraphraseMap) && q.paraphraseMap.length >= 1 &&
+          Array.isArray(q.vocabHighlights) && q.vocabHighlights.length >= 2,
+          `${pid} Q${q.num}: careful reading missing deep explanation fields`);
+        if (Array.isArray(q.optionBreakdown) && q.optionBreakdown.length === 4) {
+          q.optionBreakdown.forEach((ob, obi) => {
+            const expK = String.fromCharCode(65 + obi);
+            check(ob && ob.key === expK && nonEmptyStr(ob.zh) && nonEmptyStr(ob.reason) &&
+              ob.verdict === (expK === q.answer ? 'correct' : 'wrong'),
+              `${pid} Q${q.num} optionBreakdown ${expK} invalid`);
+          });
+        }
       });
     });
     const expectedCfNums = Array.from({ length: 10 }, (_, i) => i + 46);
@@ -370,6 +410,9 @@ REAL_CET4_PAPERS.forEach((paper, idx) => {
       check(nonEmptyStr(sb.zh) && nonEmptyStr(sb.core) && nonEmptyStr(sb.modifier) && nonEmptyStr(sb.en),
         `${pid}: translation sentenceBreakdown#${sbi} missing fields`);
     });
+    check(Array.isArray(tr.grammarFocus) && tr.grammarFocus.length >= 2 &&
+      Array.isArray(tr.posPitfalls) && tr.posPitfalls.length >= 2,
+      `${pid}: translation missing grammarFocus/posPitfalls`);
   }
 
   check(paperItemCount === 57, `${pid}: counted ${paperItemCount} items, expected exactly 57`);

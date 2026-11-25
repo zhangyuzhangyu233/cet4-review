@@ -1909,13 +1909,24 @@
       gradeHTML = `
         <div class="ai-grade-card">
           <div class="ai-grade-head">
-            <strong style="font-size:13px">选词填空逐空核对</strong>
+            <strong style="font-size:13px">选词填空逐空精析（含词性与排雷）</strong>
             <span class="ai-score-pill ${ev.passed ? 'pass' : 'fail'}">${ev.correctCount}/${ev.totalCount} 正确</span>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <div style="display:flex;flex-direction:column;gap:7px">
             ${ev.perBlank.map(b => {
               const wb = (q.wordBank || []).find(w => w.code === b.answer);
-              return `<span class="exam-tag ${b.correct ? 'ok' : 'bad'}">空${b.num}: ${escapeHTML(b.answer)}${wb ? ` ${escapeHTML(wb.word)} (${escapeHTML(wb.pos || '')})` : ''}${!b.correct ? ` [你选:${escapeHTML(b.user || '空')}]` : ''}</span>`;
+              const bd = det?.blankDetails?.[String(b.num)] || null;
+              return `
+                <div class="m-word-box" style="margin-top:0;border-color:${b.correct ? 'var(--mint-border)' : 'var(--coral-border)'}">
+                  <div>
+                    <span class="exam-tag ${b.correct ? 'ok' : 'bad'}">空${b.num}: ${escapeHTML(b.answer)}${wb ? ` ${escapeHTML(wb.word)} (${escapeHTML(wb.pos || '')})` : ''}${!b.correct ? ` [你选:${escapeHTML(b.user || '空')}]` : ''}</span>
+                  </div>
+                  ${b.explain ? `<div style="margin-top:4px;color:var(--text)">${escapeHTML(b.explain)}</div>` : ''}
+                  ${bd?.sentenceZh ? `<div style="margin-top:3px"><strong>句意：</strong>${escapeHTML(bd.sentenceZh)}</div>` : ''}
+                  ${bd?.posRule ? `<div style="margin-top:2px"><strong>词性锁定：</strong>${escapeHTML(bd.posRule)}</div>` : ''}
+                  ${bd?.distractorExclude ? `<div style="margin-top:2px"><strong>干扰排除：</strong>${escapeHTML(bd.distractorExclude)}</div>` : ''}
+                  ${bd?.wordUsage ? `<div style="margin-top:2px;color:var(--mint)"><strong>搭配考点：</strong>${escapeHTML(bd.wordUsage)}</div>` : ''}
+                </div>`;
             }).join('')}
           </div>
         </div>`;
@@ -1979,9 +1990,37 @@
         ${extraSkillRefHTML}
 
         ${det ? `
+          ${(det.stemZh || det.evidenceZh) ? `
+            <div class="m-ex-zh-card">
+              ${det.stemZh ? `<div><strong>题干/任务译文：</strong>${escapeHTML(det.stemZh)}</div>` : ''}
+              ${det.evidenceQuote && !q.evidenceQuote && !q.evidenceSentence ? `<div class="en-serif" style="margin-top:4px"><strong>原文依据：</strong>${escapeHTML(det.evidenceQuote)}</div>` : ''}
+              ${det.evidenceZh ? `<div style="margin-top:4px;color:var(--text-sec)"><strong>依据精译：</strong>${escapeHTML(det.evidenceZh)}</div>` : ''}
+            </div>` : ''}
           <div style="margin-top:8px">
-            <span class="ex-sec-tag why">为什么这么做</span>
+            <span class="ex-sec-tag why">核心破题点</span>
             <p style="font-size:13px;color:var(--text-sec);line-height:1.6;margin-bottom:9px">${escapeHTML(det.why || '')}</p>
+            ${Array.isArray(det.optionBreakdown) && det.optionBreakdown.length ? `
+              <span class="ex-sec-tag steps">A / B / C / D 逐项精析与排雷</span>
+              <div class="m-ex-opt-list">
+                ${det.optionBreakdown.map(ob => {
+                  const ok = ob.verdict === 'correct';
+                  return `
+                    <div class="m-ex-opt-row ${ok ? 'ok' : ''}">
+                      <div><span class="m-ex-opt-badge">${escapeHTML(ob.key)} · ${ok ? '正解' : '干扰'}</span><strong>${escapeHTML(ob.zh || '')}</strong></div>
+                      <div style="color:var(--text-sec);margin-top:2px">${escapeHTML(ob.reason || '')}</div>
+                    </div>`;
+                }).join('')}
+              </div>` : ''}
+            ${Array.isArray(det.paraphraseMap) && det.paraphraseMap.length ? `
+              <span class="ex-sec-tag why">同义改写对照桥</span>
+              <div style="margin-bottom:8px">
+                ${det.paraphraseMap.map(pm => `
+                  <div class="m-ex-bridge-item">
+                    <span class="en-serif" style="color:var(--mint);font-weight:700">${escapeHTML(pm.from || '')}</span> → <span class="en-serif" style="color:var(--mint);font-weight:700">${escapeHTML(pm.to || '')}</span>
+                    ${pm.note ? `<div style="color:var(--text-sec);margin-top:2px">${escapeHTML(pm.note)}</div>` : ''}
+                  </div>`).join('')}
+              </div>` : ''}
+            ${det.posNote ? `<div class="m-ex-pos-box"><strong>词性与语法提示：</strong>${escapeHTML(det.posNote)}</div>` : ''}
             <span class="ex-sec-tag steps">逐步破题</span>
             <ol class="ex-step-list">
               ${(det.steps || []).map((st, idx) => `<li class="ex-step-item"><span class="ex-step-num">${idx + 1}</span><span>${escapeHTML(st)}</span></li>`).join('')}
@@ -2172,9 +2211,16 @@
       const openMap = (inst && inst.matchOpenParas) ? inst.matchOpenParas : {};
       const targetAns = String(q.answer || '').trim().toUpperCase();
       const userAns = saved?.userVal ? String(saved.userVal).trim().toUpperCase() : '';
+      const anyOpen = paras.some((p, idx) => {
+        const lbl = String(p.label || String.fromCharCode(65 + idx)).toUpperCase();
+        return (saved?.checked && lbl === targetAns) || (openMap[lbl] !== undefined ? openMap[lbl] : true);
+      });
       bodyHTML += `
         <div class="m-word-box" style="background:var(--bg-sticky);border-color:var(--marigold-border);margin-top:0;margin-bottom:10px">
-          <div style="font-size:11px;font-weight:800;color:var(--primary);margin-bottom:3px">待匹配陈述句（先抓专有名词 / 数字定位锚点）</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="font-size:11px;font-weight:800;color:var(--primary)">待匹配陈述句（先抓专有名词 / 数字定位锚点）</span>
+            ${saved?.checked ? `<button type="button" class="m-pill-btn marigold" data-m-jump-para="${escapeHTML(targetAns)}">定位 ${escapeHTML(targetAns)}段</button>` : ''}
+          </div>
           <div class="en-serif" style="font-size:14px;font-weight:700;color:var(--text)">${escapeHTML(q.statement || '')}</div>
           ${saved?.checked && Array.isArray(q.anchorKeywords) && q.anchorKeywords.length ? `
             <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px">
@@ -2182,17 +2228,23 @@
             </div>` : ''}
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <strong style="font-size:12.5px">${escapeHTML(q.passageTitle || '长篇阅读段落 A–J')}</strong>
-          <button type="button" class="m-pill-btn" data-toggle-all-paras>展开/收起</button>
+          <strong style="font-size:12.5px">${escapeHTML(q.passageTitle || '长篇阅读段落')}（共 ${paras.length} 段）</strong>
+          <button type="button" class="m-pill-btn" data-toggle-all-paras>${anyOpen ? '全部折叠' : '全部展开'}</button>
         </div>
-        <div style="margin-bottom:10px">
+        <div class="m-match-jump-row" aria-label="快速跳段">
+          ${paras.map((p, idx) => {
+            const lbl = String(p.label || String.fromCharCode(65 + idx)).toUpperCase();
+            return `<button type="button" class="m-pill-btn ${saved?.checked && lbl === targetAns ? 'marigold' : ''}" data-m-jump-para="${escapeHTML(lbl)}">${escapeHTML(lbl)}</button>`;
+          }).join('')}
+        </div>
+        <div class="m-match-para-scroll">
           ${paras.map((p, idx) => {
             const lbl = String(p.label || String.fromCharCode(65 + idx)).toUpperCase();
             const isEvidence = saved?.checked && lbl === targetAns;
-            const isOpen = isEvidence || (openMap[lbl] !== undefined ? openMap[lbl] : idx < 2);
+            const isOpen = isEvidence || (openMap[lbl] !== undefined ? openMap[lbl] : true);
             const hlTerms = isEvidence ? (p.highlightTerms || q.anchorKeywords || []) : [];
             return `
-              <div class="m-match-para ${isEvidence ? 'evidence' : ''}">
+              <div class="m-match-para ${isEvidence ? 'evidence' : ''}" data-m-para-item="${escapeHTML(lbl)}">
                 <button type="button" class="m-match-para-head" data-toggle-para="${escapeHTML(lbl)}">
                   <span>段落 ${escapeHTML(lbl)}${isEvidence ? ' · 原文定位段' : ''}</span>
                   <span>${isOpen ? ic('chevronUp') : ic('chevronDown')}</span>
@@ -2465,6 +2517,24 @@
     }
 
     if (sk === 'matching') {
+      const scrollBox = cardEl.querySelector('.m-match-para-scroll');
+      const jumpToPara = (lbl) => {
+        const item = cardEl.querySelector(`[data-m-para-item="${lbl}"]`);
+        if (!item || !scrollBox) return;
+        const body = item.querySelector('.m-match-para-body');
+        if (body && body.classList.contains('collapsed')) {
+          body.classList.remove('collapsed');
+          if (inst) inst.matchOpenParas[lbl] = true;
+          const icSpan = item.querySelector('.m-match-para-head span:last-child');
+          if (icSpan) icSpan.innerHTML = ic('chevronUp');
+        }
+        cardEl.querySelectorAll('.m-match-para').forEach(n => n.classList.remove('is-jump-hl'));
+        item.classList.add('is-jump-hl');
+        scrollBox.scrollTo({ top: Math.max(0, item.offsetTop - scrollBox.offsetTop - 6), behavior: 'smooth' });
+      };
+      cardEl.querySelectorAll('[data-m-jump-para]').forEach(btn => {
+        btn.onclick = () => jumpToPara(btn.dataset.mJumpPara);
+      });
       cardEl.querySelectorAll('[data-toggle-para]').forEach(btn => {
         btn.onclick = () => {
           const lbl = btn.dataset.togglePara;
@@ -2477,10 +2547,14 @@
           if (icSpan) icSpan.innerHTML = willOpen ? ic('chevronUp') : ic('chevronDown');
         };
       });
-      cardEl.querySelector('[data-toggle-all-paras]')?.addEventListener('click', () => {
+      cardEl.querySelector('[data-toggle-all-paras]')?.addEventListener('click', (e) => {
         const bodies = Array.from(cardEl.querySelectorAll('.m-match-para-body'));
         const anyClosed = bodies.some(b => b.classList.contains('collapsed'));
         bodies.forEach(b => b.classList.toggle('collapsed', !anyClosed));
+        cardEl.querySelectorAll('.m-match-para-head span:last-child').forEach(sp => {
+          sp.innerHTML = anyClosed ? ic('chevronUp') : ic('chevronDown');
+        });
+        e.currentTarget.textContent = anyClosed ? '全部折叠' : '全部展开';
         if (inst) {
           (q.paragraphs || []).forEach((p, i) => {
             const lbl = String(p.label || String.fromCharCode(65 + i)).toUpperCase();

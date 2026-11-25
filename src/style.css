@@ -2969,14 +2969,55 @@ body.dark .bank-tile .bt-code { color: var(--terracotta); }
   color: var(--text);
   line-height: 1.66;
 }
-.matching-para-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+.matching-jump-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.matching-jump-chip {
+  min-width: 30px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-paper);
+  background: var(--paper-elevated);
+  color: var(--text-sec);
+  font-family: var(--font-num);
+  font-size: 11.8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.matching-jump-chip:hover,
+.matching-jump-chip.active {
+  background: var(--terracotta-soft);
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+.matching-para-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
 .matching-para-item {
+  flex: 0 0 auto;
+  flex-shrink: 0;
   border: 1px solid var(--border-paper);
   border-radius: var(--radius-sm);
   background: var(--paper-bg);
   overflow: hidden;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 .matching-para-item.is-answer { background: var(--sage-soft); border-color: var(--sage); }
+.matching-para-item.is-jump-hl {
+  border-color: var(--terracotta);
+  box-shadow: 0 0 0 2px var(--terracotta-soft);
+}
 .matching-para-head {
   width: 100%;
   border: none;
@@ -2992,11 +3033,12 @@ body.dark .bank-tile .bt-code { color: var(--terracotta); }
   text-align: left;
 }
 .matching-para-body {
-  padding: 0 13px 11px;
+  padding: 10px 14px 12px;
+  border-top: 1px dashed var(--border-stitch);
   font-family: var(--font-serif);
-  font-size: 14px;
-  color: var(--text-sec);
-  line-height: 1.74;
+  font-size: 14.2px;
+  color: var(--text);
+  line-height: 1.76;
 }
 .matching-para-item.collapsed .matching-para-body { display: none; }
 .matching-letter-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
@@ -3613,6 +3655,121 @@ body.dark .ex-step-num { color: var(--terracotta); }
   font-size: 12px;
 }
 .ex-vocab-pill strong { font-family: var(--font-serif); color: var(--terracotta); margin-right: 4px; }
+
+/* Rich Deep Explanations (Stem/Evidence Translation, A-D Option Breakdown, Paraphrase Bridge, POS Slot) */
+.ex-zh-box {
+  padding: 9px 11px;
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--terracotta);
+  border-radius: var(--radius-xs);
+  background: var(--paper-elevated);
+  margin-bottom: 10px;
+  font-size: 12.6px;
+  line-height: 1.62;
+  color: var(--text);
+}
+.ex-zh-ev {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-stitch);
+  color: var(--text-sec);
+}
+.ex-opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ex-opt-row {
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-soft);
+  background: var(--paper-elevated);
+  font-size: 12.4px;
+  line-height: 1.56;
+}
+.ex-opt-row.ok {
+  background: var(--sage-soft);
+  border-color: rgba(63, 122, 92, 0.36);
+}
+.ex-opt-row.bad {
+  background: var(--paper-elevated);
+  border-color: rgba(194, 77, 77, 0.22);
+}
+.ex-opt-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+.ex-opt-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-family: var(--font-num);
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: var(--rose-soft);
+  color: var(--rose);
+}
+.ex-opt-row.ok .ex-opt-key {
+  background: var(--sage);
+  color: #fcf9f1;
+}
+.ex-opt-tag {
+  font-size: 10.8px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--rose-soft);
+  color: var(--rose);
+}
+.ex-opt-row.ok .ex-opt-tag {
+  background: rgba(63, 122, 92, 0.18);
+  color: var(--sage);
+}
+.ex-para-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.ex-para-bridge {
+  padding: 7px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px dashed rgba(63, 122, 92, 0.42);
+  background: var(--paper-elevated);
+  font-size: 12.2px;
+  line-height: 1.54;
+}
+.ex-para-bridge strong {
+  font-family: var(--font-serif);
+  color: var(--sage);
+}
+.ex-pos-box {
+  padding: 9px 11px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(186, 130, 32, 0.42);
+  border-left: 3px solid var(--honey);
+  background: var(--paper-sticky);
+  font-size: 12.4px;
+  line-height: 1.58;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.cloze-blank-meta {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--border-stitch);
+  font-size: 12px;
+  line-height: 1.56;
+  color: var(--text-sec);
+}
 
 /* ==========================================================================
    VIEW 4: HOBONICHI MONTHLY TRACKER & 6 SOFT-ELEVATED LINEN SKILL CARDS
