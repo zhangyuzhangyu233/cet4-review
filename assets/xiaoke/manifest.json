@@ -1,0 +1,280 @@
+{
+  "is_dev_stub": false,
+  "source": "turnaround_studio_edition",
+  "character": {
+    "name_zh": "小克",
+    "name_en": "Xiao Ke",
+    "theme": "Autumn Daisy Victorian Chibi Study Companion",
+    "reference_turnaround": "assets/xiaoke/reference_turnaround.png",
+    "sprite_count": 10,
+    "sprite_dimensions": [
+      480,
+      480
+    ],
+    "embed_dimensions": [
+      320,
+      320
+    ],
+    "embed_webp_quality": 84,
+    "total_b64_bytes": 345194
+  },
+  "sprites": [
+    {
+      "id": "01_idle_smile",
+      "zh_label": "微笑待机",
+      "en_label": "Idle Smile",
+      "mood": "idle",
+      "triggers": [
+        "default",
+        "welcome",
+        "home",
+        "idle",
+        "sprint_plan"
+      ],
+      "speech_lines": [
+        "你好呀，我是小克！14天四级冲刺计划已就位，我们一起稳稳上岸～",
+        "高频词带背、听力抓信号词、阅读排陷阱，一步步来我陪着你！",
+        "点开今日冲刺任务吧，每天半小时，每一小步都算数！"
+      ],
+      "file": "assets/xiaoke/sprites/01_idle_smile.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 30767,
+      "png_bytes": 205305
+    },
+    {
+      "id": "02_study_reading",
+      "zh_label": "专注阅读",
+      "en_label": "Study Reading",
+      "mood": "study",
+      "triggers": [
+        "reading",
+        "vocab",
+        "vocab_sprint",
+        "guided_recite",
+        "cloze",
+        "card_study",
+        "detail_view"
+      ],
+      "speech_lines": [
+        "高频单词带背开始！先听读音再看词根词缀，10天滚雪球牢牢记住！",
+        "选词填空先标词性再填词，仔细阅读先抓首尾句和同义替换～",
+        "沉浸冲刺模式开启，小克和你一起认真啃完今天这组高频词！"
+      ],
+      "file": "assets/xiaoke/sprites/02_study_reading.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 29607,
+      "png_bytes": 177803
+    },
+    {
+      "id": "03_thinking_hint",
+      "zh_label": "思考提示",
+      "en_label": "Thinking Hint",
+      "mood": "hint",
+      "triggers": [
+        "hint",
+        "question_hover",
+        "hesitate",
+        "grammar_check",
+        "vocab_fuzzy"
+      ],
+      "speech_lines": [
+        "唔……这个词有点模糊？看看词根和真题例句，马上就能串起来！",
+        "注意空格前后的固定搭配和词性提示，先把明显不对的词性排除掉～",
+        "需要小克给一点破题线索吗？点开解析前再自己推导三秒试试！"
+      ],
+      "file": "assets/xiaoke/sprites/03_thinking_hint.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 32231,
+      "png_bytes": 217061
+    },
+    {
+      "id": "04_cheer_correct",
+      "zh_label": "答对欢呼",
+      "en_label": "Cheer Correct",
+      "mood": "cheer",
+      "triggers": [
+        "answer_correct",
+        "mastered",
+        "vocab_known",
+        "drill_pass"
+      ],
+      "speech_lines": [
+        "太棒啦！这一题答得干净利落，四级高分稳稳的！",
+        "漂亮！高频核心词和考点已经被你牢牢拿捏住啦～",
+        "耶！又攻克一关，按这个节奏不到14天就能刷透核心考点！"
+      ],
+      "file": "assets/xiaoke/sprites/04_cheer_correct.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 37279,
+      "png_bytes": 225204
+    },
+    {
+      "id": "05_encourage_wrong",
+      "zh_label": "温柔鼓励",
+      "en_label": "Encourage",
+      "mood": "encourage",
+      "triggers": [
+        "answer_wrong",
+        "vocab_unknown",
+        "wrong_book",
+        "retry"
+      ],
+      "speech_lines": [
+        "没关系没关系，不认识的词小克已经排进本轮复现队列啦！",
+        "现在踩过的坑，考场上就绝不会再掉进去，看懂解析再刷一遍～",
+        "别气馁，艾宾浩斯曲线最喜欢这种及时纠错，离 550+ 又近一步！"
+      ],
+      "file": "assets/xiaoke/sprites/05_encourage_wrong.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 34039,
+      "png_bytes": 216271
+    },
+    {
+      "id": "06_writing_quill",
+      "zh_label": "提笔写作",
+      "en_label": "Writing Quill",
+      "mood": "writing",
+      "triggers": [
+        "writing",
+        "translation",
+        "essay",
+        "smart_grader"
+      ],
+      "speech_lines": [
+        "作文三段式稳拿高分：点题背景 + 两条论据 + 总结建议！",
+        "翻译先找中文主谓宾搭骨架，再补定状语，中式长句立刻变地道～",
+        "试试用一两个高级连接词和非谓语结构，阅卷老师一眼加分！"
+      ],
+      "file": "assets/xiaoke/sprites/06_writing_quill.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 35463,
+      "png_bytes": 226997
+    },
+    {
+      "id": "07_listening_audio",
+      "zh_label": "听力练耳",
+      "en_label": "Listening Audio",
+      "mood": "listening",
+      "triggers": [
+        "listening",
+        "listening_radar",
+        "pronunciation",
+        "audio_play",
+        "tts",
+        "audio_quiz"
+      ],
+      "speech_lines": [
+        "听力黄金法：放音前扫选项划关键词，听到 but / however 立刻盯紧！",
+        "戴上耳机开启带背跟读，听音选义练顺耳，考场秒抓同义改写～",
+        "新闻抓首句主旨，对话听结尾建议，小克和你一起把听力变拿分项！"
+      ],
+      "file": "assets/xiaoke/sprites/07_listening_audio.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 35551,
+      "png_bytes": 223429
+    },
+    {
+      "id": "08_sleepy_rest",
+      "zh_label": "小憩护眼",
+      "en_label": "Sleepy Rest",
+      "mood": "rest",
+      "triggers": [
+        "break",
+        "idle_long",
+        "late_night",
+        "eye_rest"
+      ],
+      "speech_lines": [
+        "呼啊……已经连续学习好一会儿啦，喝口温水歇三分钟吧～",
+        "让眼睛远眺二十秒，大脑整理记忆也需要小小的留白哦。",
+        "劳逸结合效率才高，休息完小克再陪你冲下一关！"
+      ],
+      "file": "assets/xiaoke/sprites/08_sleepy_rest.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 37931,
+      "png_bytes": 230156
+    },
+    {
+      "id": "09_proud_streak",
+      "zh_label": "连击得意",
+      "en_label": "Proud Streak",
+      "mood": "proud",
+      "triggers": [
+        "streak",
+        "milestone",
+        "badge",
+        "high_accuracy"
+      ],
+      "speech_lines": [
+        "哼哼～连击达成！我就知道你绝对是四级学霸潜力股！",
+        "今日目标进度条拉满啦，小克宣布颁发满分小红花！",
+        "这个正确率简直闪闪发光，照这样下去轻松过线没压力！"
+      ],
+      "file": "assets/xiaoke/sprites/09_proud_streak.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 36771,
+      "png_bytes": 230837
+    },
+    {
+      "id": "10_eureka_tip",
+      "zh_label": "灵光考点",
+      "en_label": "Eureka Tip",
+      "mood": "eureka",
+      "triggers": [
+        "exam_tip",
+        "trap_alert",
+        "key_rule",
+        "bookmark"
+      ],
+      "speech_lines": [
+        "叮！发现高频四级陷阱！这个干扰项最喜欢偷换主语或时态！",
+        "灵光一闪～记住这组黄金同义替换，阅读选词都能直接秒杀！",
+        "小克划重点啦：这个常考短语记得点个收藏随时回看哦！"
+      ],
+      "file": "assets/xiaoke/sprites/10_eureka_tip.png",
+      "width": 480,
+      "height": 480,
+      "embed_width": 320,
+      "embed_height": 320,
+      "embed_mime": "image/webp",
+      "embed_b64_bytes": 35339,
+      "png_bytes": 221481
+    }
+  ]
+}

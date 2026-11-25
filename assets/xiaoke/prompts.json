@@ -1,0 +1,77 @@
+{
+  "reference_image": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/reference_turnaround.png",
+  "shared_character_lock": "Match the EXACT chibi character Xiao Ke from the front view of the reference turnaround sheet (c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/reference_turnaround.png): ~2-head-tall anime chibi girl with crisp bold dark-brown/black cel-shaded lineart, long thick wavy warm ginger-orange hair reaching past her waist with layered bangs and glossy oval highlights, signature large warm orange daisy flower hairpiece with golden center + layered black satin ribbons + cream-and-gold hanging tassels worn on her left side (viewer's right), large warm amber-brown gradient eyes with thick dark lashes and soft rosy cheeks, vintage cream/ivory Victorian-inspired dress with ruffled shoulder capelet embroidered with orange floral motifs, small orange daisy + black gold-trimmed ribbon bow at the collar, puffy cream long sleeves with lace cuffs, black corset waist sash with gold chain and hanging orange-gold embroidered ribbon sash + gold tassels, pleated cream skirt with delicate orange botanical hem embroidery and cream ruffled petticoat hem, black gold-trimmed overskirt side panels with small orange daisies and black bows, and cream lace-up ankle boots with dark brown laces.",
+  "shared_framing_rules": "CRITICAL COMPOSITION RULES: Single full-body chibi character ONLY, centered in a square 1:1 composition with comfortable white margin on all four sides so head, hairpiece, hands, props, and boots are 100% visible and uncropped. Pure solid flat #FFFFFF white background everywhere. Crisp closed dark-brown/black outer lineart around the entire character, dress, boots, and held props. STRICTLY NO turnaround sheet, NO multiple views or characters, NO ground shadow or drop shadow, NO background circle/frame/gradient, NO text, NO letters, NO numbers, NO speech bubbles, NO watermarks. Match the exact anime cel-shaded art style and warm color palette of the reference image.",
+  "variations": [
+    {
+      "id": "01_idle_smile",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/01_idle_smile.png",
+      "zh_label": "微笑待机",
+      "en_label": "Idle Smile",
+      "pose_prompt": "Front-facing standing neatly with a gentle, warm welcoming closed-mouth smile, bright friendly amber eyes looking directly at the viewer, hands softly clasped together in front of her black waist sash, relaxed welcoming study-companion stance."
+    },
+    {
+      "id": "02_study_reading",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/02_study_reading.png",
+      "zh_label": "专注阅读",
+      "en_label": "Study Reading",
+      "pose_prompt": "Slight three-quarter front pose, leaning slightly forward with a focused, studious cute expression and attentive amber eyes looking down at an open vintage cream-and-amber hardcover book held in both hands (blank cream pages with subtle abstract lines only, zero readable text or letters), with 2-3 tiny golden 4-point sparkles cleanly outlined near the book."
+    },
+    {
+      "id": "03_thinking_hint",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/03_thinking_hint.png",
+      "zh_label": "思考提示",
+      "en_label": "Thinking Hint",
+      "pose_prompt": "Front three-quarter pose with head tilted playfully to one side, one index finger gently tapping her chin, the other hand resting lightly by her waist, thoughtful curious amber eyes glancing slightly upward to the side with a cute tiny contemplative mouth as if thinking of a clever study hint."
+    },
+    {
+      "id": "04_cheer_correct",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/04_cheer_correct.png",
+      "zh_label": "答对欢呼",
+      "en_label": "Cheer Correct",
+      "pose_prompt": "Overjoyed celebratory front pose! Big sparkling amber eyes with bright star-shaped highlights, rosy cheeks, wide happy open-mouth cheering smile, both arms raised cheerfully high in victory with tiny clenched celebration fists, lively joyful stance (boots clearly visible and uncropped), accented with 3 tiny golden 4-point star sparkles floating near her hands."
+    },
+    {
+      "id": "05_encourage_wrong",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/05_encourage_wrong.png",
+      "zh_label": "温柔鼓励",
+      "en_label": "Encourage",
+      "pose_prompt": "Warm sympathetic comforting front pose: soft empathetic smile, slightly upturned gentle eyebrows, warm rosy cheeks, leaning slightly forward with both hands gently held up near chest height in a warm cheering/comforting gesture, accented by one tiny warm orange-gold heart motif floating beside her shoulder."
+    },
+    {
+      "id": "06_writing_quill",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/06_writing_quill.png",
+      "zh_label": "提笔写作",
+      "en_label": "Writing Quill",
+      "pose_prompt": "Concentrated cute slight three-quarter pose: determined attentive amber eyes and tiny focused smile, right hand holding a classic vintage amber-and-gold feather quill pen poised to write onto a small open brown-leather cream notebook held in her left hand (no readable text or letters on pages; crisp dark lineart around the quill and notebook)."
+    },
+    {
+      "id": "07_listening_audio",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/07_listening_audio.png",
+      "zh_label": "听力练耳",
+      "en_label": "Listening Audio",
+      "pose_prompt": "Cute front three-quarter pose wearing vintage cream-and-amber-gold over-ear headphones resting comfortably over her head and ears while keeping her signature large orange daisy and black ribbon hairpiece clearly visible on viewer's right; joyful relaxed happy humming smile with softly curved smiling eyes (or bright happy eyes), one hand gently touching an earcup, with 2-3 crisp dark-outlined amber-gold musical notes floating beside her head."
+    },
+    {
+      "id": "08_sleepy_rest",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/08_sleepy_rest.png",
+      "zh_label": "小憩护眼",
+      "en_label": "Sleepy Rest",
+      "pose_prompt": "Adorable sleepy study-break front pose: droopy half-closed sleepy amber eyes, soft rosy cheeks, cute tiny yawn with one hand delicately raised near her mouth, the other hand carefully holding a small vintage cream-and-gold teacup with dark crisp outlines and a tiny curling golden-amber steam wisp."
+    },
+    {
+      "id": "09_proud_streak",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/09_proud_streak.png",
+      "zh_label": "连击得意",
+      "en_label": "Proud Streak",
+      "pose_prompt": "Confident playful proud front three-quarter pose: cheerful smug grin with slightly puffed rosy cheeks, sparkling confident amber eyes, chin tilted slightly upward, both hands planted proudly on her hips, accented with 3 crisp golden 4-point sparkles floating around her shoulders."
+    },
+    {
+      "id": "10_eureka_tip",
+      "output_path": "c:/Users/zy134/Desktop/RealtimeAI/cet4-review/assets/xiaoke/raw/10_eureka_tip.png",
+      "zh_label": "灵光考点",
+      "en_label": "Eureka Tip",
+      "pose_prompt": "Excited eureka discovery front pose: wide bright amazed shining amber eyes, delighted open 'aha!' smile, raising one index finger straight upward enthusiastically while the other hand rests near her chest, with a small glowing golden lightbulb icon (with clean dark-brown lineart and tiny golden rays) floating just above her raised fingertip."
+    }
+  ]
+}
